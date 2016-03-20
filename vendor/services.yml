@@ -1,0 +1,44 @@
+services:
+  logging:
+    class: utl.logger.DictionaryLogger
+    arguments:
+      - "~/.config/dictionary-indicator/dictionary.log"
+      - "@event_dispatcher"
+      - 3
+  history:
+    class: utl.history.DictionaryHistory
+    arguments:
+      - "~/.config/dictionary-indicator/history.log"
+      - "@event_dispatcher"
+      - 3
+  configurator:
+    class: cnf.configurator.DictionaryConfig
+    arguments:
+      - "~/.config/dictionary-indicator/dictionary.cnf"
+      - "@event_dispatcher"
+  event_dispatcher:
+    class: evd.event.EventDispatcher
+  dictionary:
+    class: dic.dictionary.DictionaryManager
+    arguments:
+      - "@configurator"
+      - "@event_dispatcher"
+      - ["~/.dict/*", "~/.dicts/*", "~/.dictionary/*",  "~/.dictionaries/*", "~/.stardict/*", "~/.goldendict/*",
+        "~/.config/dictionary-indicator/dict", "~/.config/dictionary-indicator/dictionary", "/usr/share/dict/*",
+        "/usr/share/dictionary/*", "/usr/share/stardict/*", "/usr/share/goldendict/*" ]
+  clipboard:
+    class: uix.clipboard.TranslationClipboard
+    arguments:
+      - "@configurator"
+      - "@event_dispatcher"
+  popup:
+    class: uix.popup.TranslationPopup
+    arguments:
+      - "@configurator"
+      - "@event_dispatcher"
+      - "/usr/lib/dictionary-indicator/themes/default/theme.html"
+  indicator:
+    class: uix.indicator.TranslationIndicator
+    arguments:
+      - "@configurator"
+      - "@event_dispatcher"
