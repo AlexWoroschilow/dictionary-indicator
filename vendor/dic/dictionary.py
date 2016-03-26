@@ -61,7 +61,7 @@ class DictionarySourceCollection(object):
 
 class DictionaryWord(object):
     def __init__(self, word):
-        self._word = re.sub(r'\W+', '', word.strip('-_'))
+        self._word = word
 
     @property
     def word(self):
@@ -90,11 +90,41 @@ class DictionaryWord(object):
 
         return collection
 
+    def __str__(self):
+        return self._word
+
+
+class DictionaryWordTranslation(object):
+    _word = None
+    _translation = None
+
+    @property
+    def word(self):
+        return self._word
+
+    @property
+    def translation(self):
+        return self._translation
+
+    def __init__(self, word, translation):
+        self._word = word
+        self._translation = translation
+
+    def __len__(self):
+        return len(self._translation)
+
+    def __str__(self):
+        return self._translation
+
 
 class DictionaryManager(object):
+    _word = None
+    _config = None
+    _sources = None
+    _disabled = []
+    _dictionaries = []
+
     def __init__(self, config, dispatcher, sources):
-        self._disabled = []
-        self._dictionaries = []
         self._config = config
         self._sources = sources
 
@@ -109,6 +139,10 @@ class DictionaryManager(object):
                     dictionary_name = dictionary_info.bookname
                     event = dispatcher.new_event(DictionarySource(dictionary_name, source))
                     dispatcher.dispatch('dictionary_found', event)
+
+    @property
+    def word(self):
+        return self._word
 
     @property
     def dictionaries(self):
@@ -141,10 +175,12 @@ class DictionaryManager(object):
                 garbage.collect()
 
     def on_clipboard_text(self, event, dispatcher):
-        translation = self.get(event.data)
-        if translation is not None:
-            event = dispatcher.new_event(translation)
-            dispatcher.dispatch('clipboard_translation', event)
+        word = event.data
+        if word is not None and len(word):
+            translation = self.get(event.data)
+            if translation is not None and len(translation):
+                event = dispatcher.new_event(translation)
+                dispatcher.dispatch('dictionary.translation_clipboard', event)
 
     def on_dictionary_enabled(self, event, dispatcher):
         with DictionarySourceCollection(self._sources) as source_collection:
@@ -165,19 +201,23 @@ class DictionaryManager(object):
                 garbage.collect()
                 break
 
-    def get(self, text):
-        word = DictionaryWord(text)
+    def matches(self, match):
+        for dictionary in self._dictionaries:
+            for word in dictionary.matches(match):
+                yield word
 
+    def get(self, text):
+        self._word = DictionaryWord(text)
         translations = []
         for dictionary in self.enabled:
-            for variant in word.word:
+            for variant in self._word.word:
                 if dictionary.has_key(variant):
                     translations.append(dictionary.get(variant))
                     break
 
         if not len(translations):
             for dictionary in self.enabled:
-                for variant in word.variants:
+                for variant in self._word.variants:
                     if dictionary.has_key(variant):
                         translations.append(dictionary.get(variant))
                         break
@@ -185,4 +225,4 @@ class DictionaryManager(object):
         if not len(translations):
             return None
 
-        return string.join(translations, '')
+        return DictionaryWordTranslation(text, string.join(translations, ''))

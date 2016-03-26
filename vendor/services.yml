@@ -10,7 +10,6 @@ services:
     arguments:
       - "~/.config/dictionary-indicator/history.log"
       - "@event_dispatcher"
-      - 3
   configurator:
     class: cnf.configurator.DictionaryConfig
     arguments:
@@ -31,11 +30,18 @@ services:
     arguments:
       - "@configurator"
       - "@event_dispatcher"
-  popup:
+  window_popup:
     class: uix.popup.TranslationPopup
     arguments:
       - "@configurator"
       - "@event_dispatcher"
+      - "/usr/lib/dictionary-indicator/themes/default/theme.html"
+  window_dictionary:
+    class: uix.dictionary.TranslationDictionary
+    arguments:
+      - "@event_dispatcher"
+      - "@dictionary"
+      - "@history"
       - "/usr/lib/dictionary-indicator/themes/default/theme.html"
   indicator:
     class: uix.indicator.TranslationIndicator

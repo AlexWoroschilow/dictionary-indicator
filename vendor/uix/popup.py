@@ -22,20 +22,22 @@ gi.require_version('WebKit', '3.0')
 from gi.repository import WebKit
 
 
-class TranslationPopup(Gtk.Window):
-    def __init__(self, config, dispatcher, template):
-        self._web_view = None
-        self._template = template
-
-        dispatcher.add_listener('clipboard_translation', self.on_translation_found)
-
+class TranslationPopupWindow(Gtk.Window):
+    def __init__(self):
         Gtk.Window.__init__(self, Gtk.WindowType.POPUP)
-        self.set_keep_above(True)
-        self.set_default_size(400, 400)
         self.set_position(Gtk.WindowPosition.MOUSE)
         self.connect("event", self.on_popup_hide)
+        self.set_default_size(400, 400)
+        self.set_keep_above(True)
         self.add(self.scrolled_area)
-        self.hide()
+
+    @property
+    def content(self):
+        pass
+
+    @content.setter
+    def content(self, value):
+        self._web_view.load_html_string(value, 'text/html')
 
     @property
     def scrolled_area(self):
@@ -50,12 +52,6 @@ class TranslationPopup(Gtk.Window):
         self._web_view.can_go_back()
         return self._web_view
 
-    def on_translation_found(self, event, dispatcher):
-        with open(self._template) as template:
-            content = template.read() % event.data
-            self._web_view.load_html_string(content, 'text/html')
-            self.show_all()
-
     def on_popup_hide(self, popup, event):
         if event.type in [
             Gdk.EventType.FOCUS_CHANGE,
@@ -64,3 +60,19 @@ class TranslationPopup(Gtk.Window):
         ]:
             self.hide()
         return True
+
+
+class TranslationPopup(object):
+    def __init__(self, config, dispatcher, template):
+        self._template = template
+        self._popup = TranslationPopupWindow()
+        self._popup.connect("delete-event", Gtk.main_quit)
+        self._popup.hide()
+
+        self._dispatcher = dispatcher
+        self._dispatcher.add_listener('dictionary.translation_clipboard', self.on_translation_clipboard)
+
+    def on_translation_clipboard(self, event, dispatcher):
+        with open(self._template) as template:
+            self._popup.content = template.read() % event.data
+            self._popup.show_all()

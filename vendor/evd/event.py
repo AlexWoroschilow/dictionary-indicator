@@ -30,6 +30,10 @@ class Event(object):
     def data(self):
         return self.__data
 
+    @data.setter
+    def data(self, value):
+        self.__data = value
+
 
 class EventSubscriberInterface(object):
     @property
@@ -56,7 +60,7 @@ class EventDispatcher(object):
         self._listeners = {}
 
     @staticmethod
-    def new_event(data):
+    def new_event(data=None):
         return Event(data)
 
     def dispatch(self, event_name, event=None):
@@ -117,7 +121,6 @@ class EventDispatcher(object):
             for listener in params:
                 priority = listener[1] if len(listener) > 1 else 0
                 self.add_listener(name, getattr(subscriber, listener[0]), priority)
-
 
 # if __name__ == "__main__":
 #     dispatcher = EventDispatcher()

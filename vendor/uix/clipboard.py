@@ -11,6 +11,7 @@
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 import gi
+import re
 
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk
@@ -23,11 +24,13 @@ class TranslationClipboard(object):
         self._clipboard = Gtk.Clipboard.get(Gdk.SELECTION_PRIMARY)
         self._clipboard.connect("owner-change", self.on_clipboard_change)
 
+    def _normalize(self, word):
+        return word.strip(" \n\t-_;:,.")
+
     def on_clipboard_change(self, clipboard, event):
         text = clipboard.wait_for_text()
         if text is None or len(text) > 32:
             return None
-
-        event = self._dispatcher.new_event(text.strip().lower())
+        event = self._dispatcher.new_event(self._normalize(text.lower()))
         self._dispatcher.dispatch('clipboard_text', event)
         return True

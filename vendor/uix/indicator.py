@@ -55,18 +55,48 @@ class TranslationIndicator(object):
     @property
     def menu(self):
         menu = Gtk.Menu()
-        for dictionary_name in self.available:
-            element = Gtk.CheckMenuItem(dictionary_name)
-            element.set_active(False if self.is_disabled(dictionary_name) else True)
-            element.connect("activate", self.on_dictionary_toggle)
-            element.show()
-            menu.append(element)
+        menu.append(self._menu_dictionary_window)
+        menu.append(self._menu_separator)
+        for name in self.available:
+            menu.append(self._menu_dictionary(name))
+        menu.append(self._menu_separator)
+        menu.append(self._menu_shutdown)
+        return menu
 
+    @property
+    def _menu_history(self):
+        history = Gtk.MenuItem('History')
+        history.connect("activate", self.on_history)
+        history.show()
+        return history
+
+    @property
+    def _menu_dictionary_window(self):
+        history = Gtk.MenuItem('Dictionary')
+        history.connect("activate", self.on_dictionary_window)
+        history.show()
+        return history
+
+    @property
+    def _menu_shutdown(self):
         element = Gtk.MenuItem('Exit')
         element.connect("activate", self.on_shutdown)
         element.show()
-        menu.append(element)
-        return menu
+        return element
+
+    @property
+    def _menu_separator(self):
+        element = Gtk.SeparatorMenuItem()
+        element.show()
+        return element
+
+
+    def _menu_dictionary(self, name):
+        element = Gtk.CheckMenuItem(name)
+        element.set_active(False if self.is_disabled(name) else True)
+        element.connect("activate", self.on_dictionary_toggle)
+        element.show()
+        return element
 
     def on_dictionary_found(self, event, dispatcher):
         self.__indicator.set_menu(self.menu)
@@ -90,6 +120,14 @@ class TranslationIndicator(object):
         event = self._dispatcher.new_event(name)
         self._dispatcher.dispatch('dictionary_disabled', event)
         return None
+
+    def on_history(self, item=None):
+        event = self._dispatcher.new_event()
+        self._dispatcher.dispatch('dictionary_history', event)
+
+    def on_dictionary_window(self, item=None):
+        event = self._dispatcher.new_event()
+        self._dispatcher.dispatch('dictionary_window', event)
 
     def on_shutdown(self, item=None):
         sys.exit(0)

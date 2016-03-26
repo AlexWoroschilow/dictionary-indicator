@@ -22,6 +22,7 @@ along with PyStarDict.  If not, see <http://www.gnu.org/licenses/>.
 import gzip
 import hashlib
 import re
+import string
 from struct import unpack
 
 
@@ -177,6 +178,14 @@ class _StarDictIdx(object):
                                   matched_record)
             word, cords = record_tuple[:c - 1], record_tuple[c:]
             self._idx[word] = cords
+
+    def matches(self, match):
+        for word in self._idx.keys():
+            word = string.join(word, '')
+            if len(word) < len(match):
+                continue
+            if word.find(match) is 0:
+                yield word
 
     def __getitem__(self, word):
         """
@@ -422,6 +431,9 @@ class Dictionary(dict):
 
         # initializing cache
         self._dict_cache = {}
+
+    def matches(self, match):
+        return self.idx.matches(match)
 
     def __enter__(self):
         return self
