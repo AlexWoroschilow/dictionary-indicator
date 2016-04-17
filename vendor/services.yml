@@ -8,7 +8,7 @@ services:
   history:
     class: utl.history.DictionaryHistory
     arguments:
-      - "~/.config/dictionary-indicator/history.log"
+      - "~/.config/dictionary-indicator/history.csv"
       - "@event_dispatcher"
   configurator:
     class: cnf.configurator.DictionaryConfig
@@ -43,6 +43,8 @@ services:
       - "@dictionary"
       - "@history"
       - "/usr/lib/dictionary-indicator/themes/default/theme.html"
+      - "/usr/share/dictionary-indicator/share/icons/stardict.svg"
+
   indicator:
     class: uix.indicator.TranslationIndicator
     arguments:

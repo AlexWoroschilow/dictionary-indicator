@@ -42,7 +42,7 @@ class EventSubscriberInterface(object):
 
 
 class EventListenerItem(object):
-    def __init__(self, listener, priority):
+    def __init__(self, listener, priority=0):
         self.__listener = listener
         self.__priority = priority
 
@@ -53,6 +53,9 @@ class EventListenerItem(object):
     @property
     def priority(self):
         return self.__priority
+
+    def __eq__(self, other):
+        return self.__listener == other.__listener
 
 
 class EventDispatcher(object):
@@ -85,18 +88,19 @@ class EventDispatcher(object):
         self._listeners[event_name].append(EventListenerItem(listener, priority))
         self._listeners[event_name].sort(key=lambda item: item.priority)
 
-    def remove_listener(self, name, listener=None):
+    def remove_listener(self, name, removed=None):
         if name not in self._listeners:
             return None
 
-        if not listener:
+        if not removed:
             del self._listeners[name]
             return None
 
-        for p, l in self._listeners[name].items():
-            if l is listener:
-                self._listeners[name].pop(p)
-                return None
+        listener_removed = EventListenerItem(removed)
+        index = self._listeners[name].index(listener_removed)
+        if index is not None:
+            self._listeners[name].pop(index)
+            return None
 
     def add_subscriber(self, subscriber):
         if not isinstance(subscriber, EventSubscriberInterface):

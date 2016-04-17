@@ -24,7 +24,7 @@ class DictionaryLogger(object):
             os.makedirs(logfile_dir, 0744)
 
 
-        dispatcher.add_listener('clipboard_text', self.on_clipboard_text)
+        dispatcher.add_listener('dictionary.clipboard', self.on_clipboard_text)
         dispatcher.add_listener('dictionary_found', self.on_dictionary_found)
         dispatcher.add_listener('dictionary_enabled', self.on_dictionary_enabled)
         dispatcher.add_listener('dictionary_disabled', self.on_dictionary_disabled)

@@ -24,6 +24,7 @@ import hashlib
 import re
 import string
 from struct import unpack
+from suffix_tree import SuffixTree
 
 
 class _StarDictIfo(object):
@@ -141,6 +142,7 @@ class _StarDictIdx(object):
          word_data_offset;  // word data's offset in .dict file
          word_data_size;  // word data's total size in .dict file 
     """
+    _tree = None
 
     def __init__(self, dict_prefix, container):
 
@@ -177,14 +179,22 @@ class _StarDictIdx(object):
             record_tuple = unpack('!%sc%sL' % (c, idx_offset_format),
                                   matched_record)
             word, cords = record_tuple[:c - 1], record_tuple[c:]
-            self._idx[word] = cords
+            self._idx[string.join(word, '')] = cords
 
     def matches(self, match):
         for word in self._idx.keys():
-            word = string.join(word, '')
             if len(word) < len(match):
                 continue
+
             if word.find(match) is 0:
+                yield word
+
+            if match[0:1].islower():
+                if word.find(match.capitalize()) is 0:
+                    yield word
+                continue
+
+            if word.find(match.lower()) is 0:
                 yield word
 
     def __getitem__(self, word):
@@ -193,13 +203,13 @@ class _StarDictIdx(object):
         
         @note: here may be placed flexible search realization
         """
-        return self._idx[tuple(word)]
+        return self._idx[word]
 
     def __contains__(self, k):
         """
         returns True if index has a word k, else False
         """
-        return tuple(k) in self._idx
+        return k in self._idx
 
     def __eq__(self, y):
         """

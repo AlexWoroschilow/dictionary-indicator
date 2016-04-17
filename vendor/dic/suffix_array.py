@@ -267,23 +267,23 @@ def naiveSearch(SA, T, W):
     return LW
 
 
-def main():
-    T = 'abracadabra'
-    suffs, sa = suffixArray(T)
-    from pprint import pprint
-    pprint(suffs)
-    pprint(sa)
+# def main():
+#     T = 'abracadabra'
+#     suffs, sa = suffixArray(T)
+#     from pprint import pprint
+#     pprint(suffs)
+#     pprint(sa)
 
 
 def main():
     print("Testing suffix array search")
-    T = 'abracadabracada$'
+    T = 'test$baum$tree'
     T, suffs, sa = suffixArray(T)
     print("T = {}".format(T))
     print("sorted suffixes of T = {}".format(", ".join(suffs)))
     print("suffix array of T = {}".format(", ".join([str(i) for i in sa])))
 
-    s = ['cada', 'braa', 'abr']
+    s = ['test']
     for P in s:
         print("Searching for position for '{}'".format(P))
         nr = naiveSearch(sa, T, P)

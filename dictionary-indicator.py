@@ -13,12 +13,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 import gi
 import sys
+import os
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk
 
-sys.path.append('/usr/lib/dictionary-indicator/vendor')
+os.chdir('/usr/lib/dictionary-indicator')
+
+sys.path.append('vendor')
 from vendor import ioc
 
 if __name__ == "__main__":
-    ioc.build(['/usr/lib/dictionary-indicator/vendor/services.yml'])
+    ioc.build(['vendor/services.yml'])
     Gtk.main()

@@ -128,7 +128,7 @@ class DictionaryManager(object):
         self._config = config
         self._sources = sources
 
-        dispatcher.add_listener('clipboard_text', self.on_clipboard_text, 0)
+        dispatcher.add_listener('dictionary.clipboard', self.on_clipboard_text, 0)
         dispatcher.add_listener('dictionary_found', self.on_dictionary_found, 10)
         dispatcher.add_listener('dictionary_enabled', self.on_dictionary_enabled, 10)
         dispatcher.add_listener('dictionary_disabled', self.on_dictionary_disabled, 10)

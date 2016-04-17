@@ -12,6 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 import sys
 import gi
+
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk
 
@@ -56,6 +57,7 @@ class TranslationIndicator(object):
     def menu(self):
         menu = Gtk.Menu()
         menu.append(self._menu_dictionary_window)
+        menu.append(self._menu_scaning)
         menu.append(self._menu_separator)
         for name in self.available:
             menu.append(self._menu_dictionary(name))
@@ -64,15 +66,16 @@ class TranslationIndicator(object):
         return menu
 
     @property
-    def _menu_history(self):
-        history = Gtk.MenuItem('History')
-        history.connect("activate", self.on_history)
-        history.show()
-        return history
+    def _menu_scaning(self):
+        entity = Gtk.CheckMenuItem('Scan clipboard')
+        entity.connect("activate", self.on_clipboard_scan)
+        entity.set_active(True)
+        entity.show()
+        return entity
 
     @property
     def _menu_dictionary_window(self):
-        history = Gtk.MenuItem('Dictionary')
+        history = Gtk.MenuItem('Show main window')
         history.connect("activate", self.on_dictionary_window)
         history.show()
         return history
@@ -90,13 +93,21 @@ class TranslationIndicator(object):
         element.show()
         return element
 
-
     def _menu_dictionary(self, name):
         element = Gtk.CheckMenuItem(name)
         element.set_active(False if self.is_disabled(name) else True)
         element.connect("activate", self.on_dictionary_toggle)
         element.show()
         return element
+
+    def on_clipboard_scan(self, item=None):
+        if item.get_active():
+            event = self._dispatcher.new_event()
+            self._dispatcher.dispatch('dictionary.clipboard_scanning_enable', event)
+            return True
+        event = self._dispatcher.new_event()
+        self._dispatcher.dispatch('dictionary.clipboard_scanning_disable', event)
+        return True
 
     def on_dictionary_found(self, event, dispatcher):
         self.__indicator.set_menu(self.menu)
