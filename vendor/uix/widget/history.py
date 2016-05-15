@@ -17,8 +17,8 @@ from gi.repository import Gtk
 gi.require_version('Gdk', '3.0')
 from gi.repository import Gdk
 
-gi.require_version('WebKit', '3.0')
-from gi.repository import WebKit
+#gi.require_version('WebKit', '3.0')
+#from gi.repository import WebKit
 
 
 class TranslationHistoryFileChooser(Gtk.FileChooserDialog):

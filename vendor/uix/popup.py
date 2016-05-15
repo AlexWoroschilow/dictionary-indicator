@@ -18,8 +18,8 @@ from gi.repository import Gtk
 gi.require_version('Gdk', '3.0')
 from gi.repository import Gdk
 
-gi.require_version('WebKit', '3.0')
-from gi.repository import WebKit
+#gi.require_version('WebKit', '3.0')
+#from gi.repository import WebKit
 
 
 class TranslationPopupWindow(Gtk.Window):
@@ -43,14 +43,15 @@ class TranslationPopupWindow(Gtk.Window):
     def scrolled_area(self):
         scrolled_window = Gtk.ScrolledWindow()
         scrolled_window.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.NEVER)
-        scrolled_window.add(self.web_view)
+        #scrolled_window.add(self.web_view)
         return scrolled_window
 
     @property
     def web_view(self):
-        self._web_view = WebKit.WebView()
-        self._web_view.can_go_back()
-        return self._web_view
+#        self._web_view = WebKit.WebView()
+#        self._web_view.can_go_back()
+#        return self._web_view
+        return None
 
     def on_popup_hide(self, popup, event):
         if event.type in [

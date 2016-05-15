@@ -103,10 +103,7 @@ class EventDispatcher(object):
             return None
 
     def add_subscriber(self, subscriber):
-        if not isinstance(subscriber, EventSubscriberInterface):
-            raise ValueError('Unexpected subscriber type given')
-
-        for name, params in subscriber.subscribed.items():
+        for name, params in subscriber.subscribed_events:
             if isinstance(params, str):
                 self.add_listener(name, getattr(subscriber, params))
                 continue

@@ -1,0 +1,7 @@
+services:
+  event_dispatcher:
+    class: evd.event.EventDispatcher
+  dictionary:
+    class: dic.dictionary.DictionaryManager
+    arguments:
+      - ["~/.dict/*", "~/.dicts/*", "~/.dictionary/*",  "~/.dictionaries/*", "~/.stardict/*"]

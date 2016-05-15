@@ -34,7 +34,7 @@ class TranslationIndicator(object):
 
         self.__indicator = Indicator.new(
                 "Indicator Popup Dictionary",
-                "/usr/share/power-manager/share/icons/1x50px.png",
+                "/usr/share/dictionary-indicator/share/icons/1x50px.png",
                 IndicatorCategory.SYSTEM_SERVICES
         )
         self.__indicator.set_status(IndicatorStatus.ACTIVE)

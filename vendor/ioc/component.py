@@ -252,10 +252,11 @@ class ContainerBuilder(Container):
             self.logger.debug("End resolving all parameters!")
 
         if container.has('ioc.extra.event_dispatcher'):
-            container.get('ioc.extra.event_dispatcher').dispatch('ioc.container.built', {
-                'container': container,
-                'container_builder': self
-            })
+            container.get('ioc.extra.event_dispatcher')\
+                .dispatch('ioc.container.built', {
+                    'container': container,
+                    'container_builder': self
+                })
 
         for extension in extensions:
             extension.start(container)

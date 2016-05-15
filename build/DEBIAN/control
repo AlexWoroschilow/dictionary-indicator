@@ -1,9 +1,0 @@
-Package: dictionary-indicator
-Version: 0.05
-Section: misc
-Priority: optional
-Architecture: all
-Depends: python3, python3-yaml
-Maintainer: Alex Woroschilow <alex.woroschilow@gmail.com>
-Description: Just an experiment
-

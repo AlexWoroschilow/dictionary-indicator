@@ -18,8 +18,8 @@ from gi.repository import Gtk
 gi.require_version('Gdk', '3.0')
 from gi.repository import Gdk
 
-gi.require_version('WebKit', '3.0')
-from gi.repository import WebKit
+#gi.require_version('WebKit', '3.0')
+#from gi.repository import WebKit
 
 from widget.history import *
 from widget.translation import *
@@ -49,7 +49,7 @@ class DictionaryWindow(Gtk.Window):
         Gtk.Window.__init__(self, title="Translation history")
         self.connect("event", self.on_dictionary_event)
         self.connect("set-focus", self.on_dictionary_focus_changed)
-        self.set_icon_from_file(icon)
+#        self.set_icon_from_file(icon)
 
         self.set_size_request(1100, 700)
         self.set_position(Gtk.WindowPosition.MOUSE)
@@ -162,7 +162,19 @@ class TranslationDictionary(object):
         self._dispatcher = dispatcher
         self._icon = icon
 
-        self._dispatcher.add_listener('dictionary_window', self.on_dictionary_window)
+        # self._dispatcher.add_listener('dictionary_window', self.on_dictionary_window)
+
+        self._window = DictionaryWindow(self, self._dictionary, self._history, self._template, self._icon)
+
+        self._dispatcher.add_listener('dictionary.clipboard', self._window.on_dictionary_clipboard, 100)
+        self._dispatcher.add_listener('dictionary.translation', self._window.on_dictionary_translation, 100)
+        self._dispatcher.add_listener('dictionary.history_output', self._window.on_history_output, 100)
+
+        self._window.connect("delete-event", self.on_dictionary_window_closed)
+        self._window.show_all()
+        print('asfsdf')
+
+        Gtk.main()
 
     def on_dictionary_window(self, event, dispatcher):
         self._window = DictionaryWindow(self, self._dictionary, self._history, self._template, self._icon)

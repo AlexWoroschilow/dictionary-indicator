@@ -14,11 +14,11 @@ import gi
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk
 
-gi.require_version('Gdk', '3.0')
-from gi.repository import Gdk
+#gi.require_version('Gdk', '3.0')
+#from gi.repository import Gdk
 
-gi.require_version('WebKit', '3.0')
-from gi.repository import WebKit
+#gi.require_version('WebKit', '3.0')
+#from gi.repository import WebKit
 
 
 class DictionaryTranslationAreaWidget(Gtk.VBox):
@@ -49,13 +49,14 @@ class DictionaryTranslationAreaWidget(Gtk.VBox):
         entity.set_margin_bottom(5)
         entity.set_size_request(280, 400)
 
-        entity.add(self.widget_webview)
+#        entity.add(self.widget_webview)
         return entity
 
     @property
     def widget_webview(self):
-        self._webview = WebKit.WebView()
-        return self._webview
+#        self._webview = WebKit.WebView()
+#        return self._webview
+        return None
 
     @property
     def label(self):
@@ -71,9 +72,10 @@ class DictionaryTranslationAreaWidget(Gtk.VBox):
 
     @content.setter
     def content(self, value):
-        with open(self._template) as template:
-            self._webview.load_html_string(template.read() % value, 'text/html')
-
+        print(value)
+#        with open(self._template) as template:
+#            self._webview.load_html_string(template.read() % value, 'text/html')
+        pass
 
 class DictionarySuggestionAreaWidget(Gtk.VBox):
     _tree = None

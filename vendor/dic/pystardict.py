@@ -24,7 +24,6 @@ import hashlib
 import re
 import string
 from struct import unpack
-from suffix_tree import SuffixTree
 
 
 class _StarDictIfo(object):
