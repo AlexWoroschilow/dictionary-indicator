@@ -172,7 +172,6 @@ class TranslationDictionary(object):
 
         self._window.connect("delete-event", self.on_dictionary_window_closed)
         self._window.show_all()
-        print('asfsdf')
 
         Gtk.main()
 

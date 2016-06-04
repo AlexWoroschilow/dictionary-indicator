@@ -10,4 +10,19 @@
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-from app import *
+
+
+class HistoryEventSubscriber(object):
+    _container = None
+
+    def __init__(self, container=None):
+        self._container = container
+
+    @property
+    def subscribed_events(self):
+        yield ('dictionary.translation', ('on_dictionary_translation'))
+
+    def on_dictionary_translation(self, event, dispatcher):
+        word, translation = event.data
+        history = self._container.get('history')
+        history.add_history(word)

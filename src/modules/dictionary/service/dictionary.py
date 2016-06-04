@@ -58,6 +58,11 @@ class DictionaryManager(object):
         for dictionary in self._dictionaries:
             yield dictionary
 
+    def suggestions(self, match):
+        for dictionary in self._dictionaries:
+            for word in dictionary.matches(match):
+                yield word
+
     def translate(self, word):
         translations = []
         for dictionary in self.dictionaries:

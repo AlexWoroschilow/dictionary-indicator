@@ -19,10 +19,12 @@ along with PyStarDict.  If not, see <http://www.gnu.org/licenses/>.
 
 @author: Serge Matveenko <s@matveenko.ru>
 """
+import os
+import re
 import gzip
 import hashlib
-import re
 import string
+import sqlite3
 from struct import unpack
 
 
@@ -175,8 +177,7 @@ class _StarDictIdx(object):
         """ unpack parsed records """
         for matched_record in matched_records:
             c = matched_record.find('\x00') + 1
-            record_tuple = unpack('!%sc%sL' % (c, idx_offset_format),
-                                  matched_record)
+            record_tuple = unpack('!%sc%sL' % (c, idx_offset_format), matched_record)
             word, cords = record_tuple[:c - 1], record_tuple[c:]
             self._idx[string.join(word, '')] = cords
 
@@ -221,6 +222,90 @@ class _StarDictIdx(object):
         returns True if hashlib.md5(x.idx) is not equal to hashlib.md5(y.idx), else False
         """
         return not self.__eq__(y)
+
+
+class _StarDictIdxSQLite(_StarDictIdx):
+    _connection = None
+
+    def __init__(self, dict_prefix, container):
+
+        idx_filename = '%s.idx' % dict_prefix
+        idx_filename_gz = '%s.gz' % idx_filename
+
+        try:
+            file = open_file(idx_filename, idx_filename_gz)
+        except:
+            raise Exception('.idx file does not exists')
+
+        """ check file size """
+        self._file = file.read()
+        if file.tell() != container.ifo.idxfilesize:
+            raise Exception('size of the .idx file is incorrect')
+
+        database = "%s.db" % dict_prefix
+        if os.path.isfile(database):
+            self._connection = sqlite3.connect(database, check_same_thread=False)
+            return
+
+        """ prepare main dict and parsing parameters """
+        self._idx = {}
+        idx_offset_bytes_size = int(container.ifo.idxoffsetbits / 8)
+        idx_offset_format = {4: 'L', 8: 'Q',}[idx_offset_bytes_size]
+        idx_cords_bytes_size = idx_offset_bytes_size + 4
+
+        """ parse data via regex """
+        record_pattern = r'([\d\D]+?\x00[\d\D]{%s})' % idx_cords_bytes_size
+        matched_records = re.findall(record_pattern, self._file)
+
+        """ check records count """
+        if len(matched_records) != container.ifo.wordcount:
+            raise Exception('words count is incorrect')
+
+        self._connection = sqlite3.connect(database, check_same_thread=False)
+        self._connection.text_factory = str
+        self._connection.execute('''CREATE TABLE words (word text, start integer, length integer)''')
+        self._connection.execute('''CREATE INDEX IDX_WORD ON words(word)''')
+
+        """ unpack parsed records """
+        for index, matched_record in enumerate(matched_records):
+            c = matched_record.find('\x00') + 1
+            record_tuple = unpack('!%sc%sL' % (c, idx_offset_format), matched_record)
+            word, cords = record_tuple[:c - 1], record_tuple[c:]
+            if not len(word):
+                continue
+
+            word = (string.join(word, '')).strip(" \n\t-_;:,.'\"")
+            if not len(word):
+                continue
+
+            start, length = cords
+            self._connection.execute("INSERT INTO words VALUES (?, ?, ?)", (word, start, length))
+        self._connection.commit()
+
+    def matches(self, word):
+        collection = []
+        query = "SELECT * FROM words WHERE word LIKE '%s' limit 100" % ("%" + word + "%")
+        pointer = self._connection.execute(query)
+        for result in pointer.fetchall():
+            word, start, length = result
+            collection.append(word)
+        return collection
+
+    def __getitem__(self, word):
+        query = "SELECT * FROM words WHERE word = '%s'"
+        pointer = self._connection.execute(query % word)
+        for result in pointer.fetchall():
+            word, start, length = result
+            return (start, length)
+        return None
+
+    def __contains__(self, word):
+        query = "SELECT COUNT(*) FROM words WHERE word = '%s'"
+        pointer = self._connection.execute(query % word)
+        for result in pointer.fetchone():
+            if result > 0:
+                return True
+        return False
 
 
 class _StarDictDict(object):
@@ -430,7 +515,7 @@ class Dictionary(dict):
         self.ifo = _StarDictIfo(dict_prefix=filename_prefix, container=self)
 
         # reading somedict.idx or somedict.idx.gz
-        self.idx = _StarDictIdx(dict_prefix=filename_prefix, container=self)
+        self.idx = _StarDictIdxSQLite(dict_prefix=filename_prefix, container=self)
 
         # reading somedict.dict or somedict.dict.dz
         self.dict = _StarDictDict(dict_prefix=filename_prefix, container=self)

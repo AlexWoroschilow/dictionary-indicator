@@ -1,0 +1,3 @@
+services:
+  translation_page:
+    class: src.modules.translation.widget.notebook.TranslationPage

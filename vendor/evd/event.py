@@ -10,6 +10,7 @@
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+import logging
 from collections import OrderedDict
 
 
@@ -59,8 +60,12 @@ class EventListenerItem(object):
 
 
 class EventDispatcher(object):
+    _logger = []
+
     def __init__(self):
+        self._logger = logging.getLogger('event_dispatcher')
         self._listeners = {}
+
 
     @staticmethod
     def new_event(data=None):
@@ -103,6 +108,7 @@ class EventDispatcher(object):
             return None
 
     def add_subscriber(self, subscriber):
+        self._logger.debug("subscriber:  %s" %  subscriber.__class__.__name__)
         for name, params in subscriber.subscribed_events:
             if isinstance(params, str):
                 self.add_listener(name, getattr(subscriber, params))

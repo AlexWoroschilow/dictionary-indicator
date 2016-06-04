@@ -10,39 +10,33 @@
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-from event.subscribers import *
+from src.modules.translation.event.gui import *
+
+import logging
 
 
 class Loader(object):
     _options = None
-    _location = None
     _container = None
 
-    def __init__(self, source, options=None):
+    def __init__(self, options=None):
+        self._logger = logging.getLogger('translation')
         self._options = options
-        self._location = source
-
-    @property
-    def config(self):
-        return '%s/config/services.xml' \
-               % self._location
-
-    @property
-    def enabled(self):
-        if self._options is not None:
-            return self._options.gui
-        return True
-
-    def on_loaded(self, container):
-        self._container = container
-        if not self._container.has('event_dispatcher'):
-            return None
-
-        event_dispatcher = self._container.get('event_dispatcher')
-        event_dispatcher.add_subscriber(AppEventSubscriber(self._container))
 
     def __enter__(self):
         return self
 
     def __exit__(self, type, value, traceback):
         pass
+
+    @property
+    def config(self):
+        return None
+
+    @property
+    def enabled(self):
+        return True
+
+    def on_loaded(self, container):
+        event_dispatcher = container.get('event_dispatcher')
+        event_dispatcher.add_subscriber(GuiEventSubscriber(container))

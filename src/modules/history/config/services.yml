@@ -1,0 +1,5 @@
+services:
+  history:
+    class: utl.history.DictionaryHistory
+    arguments:
+      - "~/history.csv"

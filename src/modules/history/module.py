@@ -10,7 +10,8 @@
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-from src.modules.terminal.event.app import *
+from src.modules.history.event.gui import *
+from src.modules.history.event.dictionary import *
 
 
 class Loader(object):
@@ -22,17 +23,16 @@ class Loader(object):
 
     @property
     def config(self):
-        return None
+        return 'config/services.yml'
 
     @property
     def enabled(self):
         return True
 
     def on_loaded(self, container):
-        if container.has('event_dispatcher'):
-            event_dispatcher = container.get('event_dispatcher')
-            event_dispatcher.add_subscriber(TerminalEventSubscriber(container))
-        self._container = container
+        event_dispatcher = container.get('event_dispatcher')
+        event_dispatcher.add_subscriber(GuiEventSubscriber(container))
+        event_dispatcher.add_subscriber(HistoryEventSubscriber(container))
 
     def __enter__(self):
         return self

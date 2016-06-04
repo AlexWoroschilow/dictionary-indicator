@@ -1,0 +1,5 @@
+services:
+  dictionary:
+    class: src.modules.dictionary.service.dictionary.DictionaryManager
+    arguments:
+      - ["~/.dictionary/*"]

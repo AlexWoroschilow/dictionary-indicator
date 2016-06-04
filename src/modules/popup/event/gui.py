@@ -10,26 +10,20 @@
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+from src.modules.popup.widget.notebook import *
+import logging
 
 
-class AppEventSubscriber(object):
+class GuiEventSubscriber(object):
+    _window = None
     _container = None
+    _logger = None
+    _application = None
+    _popup = None
 
     def __init__(self, container=None):
         self._container = container
 
     @property
     def subscribed_events(self):
-        yield ('app.started', ('on_started'))
-
-    def on_started(self, event, dispatcher):
-        dictionary = self._container.get('dictionary')
-
-        options = event.data['options']
-        if options is None:
-            return None
-
-        word = options.word
-        if word is not None:
-            for translation in dictionary.translate(word):
-                print(translation)
+        pass

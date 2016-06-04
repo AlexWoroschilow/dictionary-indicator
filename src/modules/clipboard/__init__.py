@@ -10,17 +10,4 @@
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-
-
-class AppEventSubscriber(object):
-    _container = None
-
-    def __init__(self, container=None):
-        self._container = container
-
-    @property
-    def subscribed_events(self):
-        yield ('app.started', ('on_started'))
-
-    def on_started(self, event, dispatcher):
-        pass
+from module import Loader

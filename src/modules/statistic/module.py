@@ -10,7 +10,8 @@
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-from src.modules.terminal.event.app import *
+from src.modules.statistic.event.gui import *
+import logging
 
 
 class Loader(object):
@@ -18,6 +19,7 @@ class Loader(object):
     _container = None
 
     def __init__(self, options=None):
+        self._logger = logging.getLogger('statistic')
         self._options = options
 
     @property
@@ -29,10 +31,8 @@ class Loader(object):
         return True
 
     def on_loaded(self, container):
-        if container.has('event_dispatcher'):
-            event_dispatcher = container.get('event_dispatcher')
-            event_dispatcher.add_subscriber(TerminalEventSubscriber(container))
-        self._container = container
+        event_dispatcher = container.get('event_dispatcher')
+        event_dispatcher.add_subscriber(GuiEventSubscriber(container))
 
     def __enter__(self):
         return self
