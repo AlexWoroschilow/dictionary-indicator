@@ -1,1 +1,8 @@
 services:
+  clipboard.subscriber_gui:
+    class: modules.clipboard.event.kernel.KernelEventSubscriber
+    calls:
+         - [ set_container, [ "@service_container" ]]
+    tags:
+        event.subscriber:
+          - [ ]

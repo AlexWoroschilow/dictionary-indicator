@@ -1,3 +1,1 @@
-services:
-  event_dispatcher:
-    class: evd.event.EventDispatcher
+ioc.extra.event:

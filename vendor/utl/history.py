@@ -14,6 +14,7 @@ import os
 from logging import *
 import string
 
+
 class DictionaryHistory(object):
     _logger = None
     _logger_handler = None
@@ -33,7 +34,7 @@ class DictionaryHistory(object):
     @property
     def handler(self):
         self._logger_handler = FileHandler(filename=self._logfile)
-        self._logger_handler.setFormatter(Formatter('%(asctime)s;%(message)s'))
+        self._logger_handler.setFormatter(Formatter('%(asctime)s;%(message)s', "%Y.%m.%d %H:%M:%S"))
         return self._logger_handler
 
     def add_history(self, value):

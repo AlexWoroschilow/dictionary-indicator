@@ -1,1 +1,9 @@
-#services:
+services:
+  statistic.subscriber_gui:
+    class: modules.statistic.event.kernel.KernelEventSubscriber
+    calls:
+         - [ set_container, [ "@service_container" ]]
+    tags:
+        event.subscriber:
+          - [ ]
+

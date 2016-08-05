@@ -1,94 +1,129 @@
+# -*- coding: utf-8 -*-
+# Copyright 2015 Alex Woroschilow (alex.woroschilow@gmail.com)
 #
-# Copyright 2014 Thomas Rabaix <thomas.rabaix@gmail.com>
-#
-# Licensed under the Apache License, Version 2.0 (the "License"); you may
-# not use this file except in compliance with the License. You may obtain
-# a copy of the License at
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
 #
 # http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
-# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
-# License for the specific language governing permissions and limitations
-# under the License.
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+import logging
+
 
 class Event(object):
-    _propagation_stopped = False
-
     def __init__(self, data=None):
-        self.data = data or {}
+        self.__name = None
+        self.__data = data
 
-    def stop_propagation(self):
-        self._propagation_stopped = True
+    @property
+    def name(self):
+        return self.__name
 
-    def is_propagation_stop(self):
-        return self._propagation_stopped
+    @name.setter
+    def name(self, value):
+        self.__name = value
 
-    def get(self, name):
-        return self.data[name]
+    @property
+    def data(self):
+        return self.__data
 
-    def set(self, name, value):
-        self.data[name] = value
+    @data.setter
+    def data(self, value):
+        self.__data = value
 
-    def has(self, name):
-        return name in self.data
+
+class EventSubscriberInterface(object):
+    @property
+    def subscribed(self):
+        raise NotImplementedError()
+
+
+class EventListenerItem(object):
+    def __init__(self, listener, priority=0):
+        self.__listener = listener
+        self.__priority = priority
+
+    @property
+    def listener(self):
+        return self.__listener
+
+    @property
+    def priority(self):
+        return self.__priority
+
+    def __eq__(self, other):
+        return self.__listener == other.__listener
+
 
 class Dispatcher(object):
-    def __init__(self, logger=None):
-        self.listeners = {}
-        self.logger = logger
+    _logger = []
 
-    def dispatch(self, name, event=None):
-        if isinstance(event, dict):
+    def __init__(self, logger = None):
+        self._logger = logger
+        self._listeners = {}
+
+
+    @staticmethod
+    def new_event(data=None):
+        return Event(data)
+
+    def dispatch(self, event_name, event=None):
+        if event is None:
+            event = Event()
+        elif not isinstance(event, Event):
             event = Event(event)
+        event.name = event_name
 
-        event = event or Event()
-
-        if self.logger:
-            self.logger.debug("event.dispatch: %s" % name)
-
-        if name not in self.listeners:
+        if event_name not in self._listeners:
             return event
 
-        for listener in self.get_listeners(name):
-            if self.logger:
-                self.logger.debug("event.dispatch: %s to %s" % (name, listener))
-
-            listener(event)
-
-            if event.stop_propagation():
-                if self.logger:
-                    self.logger.debug("event.dispatch: %s is stopped" % name)
-
-                break
+        for listener_item in self._listeners[event_name]:
+            listener_item.listener(event, self)
 
         return event
 
-    def get_listeners(self, name):
-        """
-        Return the callables related to name
-        """        
-        return list(map(lambda listener: listener[0], self.listeners[name]))
+    def add_listener(self, event_name, listener, priority=0):
+        if event_name not in self._listeners:
+            self._listeners[event_name] = []
 
-    def add_listener(self, name, listener, priority=0):
-        """
-        Add a new listener to the dispatch
-        """
-        if name not in self.listeners:
-            self.listeners[name] = []
+        self._listeners[event_name].append(EventListenerItem(listener, priority))
+        self._listeners[event_name].sort(key=lambda item: item.priority)
 
-        self.listeners[name].append((listener, priority))
+    def remove_listener(self, name, removed=None):
+        if name not in self._listeners:
+            return None
 
-        # reorder event
-        self.listeners[name].sort(key=lambda listener: listener[1], reverse=True)
+        if not removed:
+            del self._listeners[name]
+            return None
 
-    def remove_listener(self, name, listener):
-        if name not in self.listeners:
-            return
+        listener_removed = EventListenerItem(removed)
+        index = self._listeners[name].index(listener_removed)
+        if index is not None:
+            self._listeners[name].pop(index)
+            return None
 
-        self.listeners[name] = [item for item in self.listeners[name] if item != listener]
+    def add_subscriber(self, subscriber):
+        self._logger.debug("subscriber:  %s" %  subscriber.__class__.__name__)
+        for name, params in subscriber.subscribed_events:
+            if isinstance(params, str):
+                self.add_listener(name, getattr(subscriber, params))
+                continue
 
-    def remove_listeners(self, name):
-        if name in self.listeners:
-            self.listeners[name] = []
+            if not isinstance(params, list):
+                raise ValueError('Invalid params for event "%s"' % name)
+
+            if not params:
+                raise ValueError('Invalid params "%r" for event "%s"' % (params, name))
+
+            if len(params) <= 2 and isinstance(params[0], str):
+                priority = params[1] if len(params) > 1 else 0
+                self.add_listener(name, getattr(subscriber, params[0]), priority)
+                continue
+
+            for listener in params:
+                priority = listener[1] if len(listener) > 1 else 0
+                self.add_listener(name, getattr(subscriber, listener[0]), priority)

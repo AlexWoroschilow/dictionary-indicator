@@ -1,5 +1,12 @@
 services:
   dictionary:
-    class: src.modules.dictionary.service.dictionary.DictionaryManager
+    class: modules.dictionary.service.dictionary.DictionaryManager
     arguments:
       - ["~/.dictionary/*"]
+  dictionary.subscriber_gui:
+    class: modules.dictionary.event.kernel.KernelEventSubscriber
+    calls:
+         - [ set_container, [ "@service_container" ]]
+    tags:
+        event.subscriber:
+          - [ ]

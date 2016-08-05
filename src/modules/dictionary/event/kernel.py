@@ -10,22 +10,27 @@
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-from src.modules.statistic.widget.notebook import *
-import logging
+from modules.dictionary.widget.notebook import *
 
 
-class GuiEventSubscriber(object):
+class KernelEventSubscriber(object):
     _container = None
-    _logger = None
 
-    def __init__(self, container=None):
-        self._logger = logging.getLogger('statistic')
+    @property
+    def container(self):
+        return self._container
+
+    def set_container(self, container):
         self._container = container
 
     @property
     def subscribed_events(self):
-        yield ('gui_event.notebook', ['on_notebook', 2])
+        yield ('kernel_event.window_tab', ['on_window_tab', 4])
 
-    def on_notebook(self, event, dispatcher):
-        statistic = StatisticPage(event.data)
-        event.data.AddPage(statistic, "Statistic")
+    def on_window_tab(self, event, dispatcher):
+        dictionary = self.container.get('dictionary')
+
+        page = DictionaryPage(event.data)
+        page.dictionaries = dictionary.dictionaries
+
+        event.data.AddPage(page, "Dictionaries")

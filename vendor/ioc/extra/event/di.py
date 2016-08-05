@@ -25,6 +25,9 @@ class Extension(ioc.component.Extension):
 
     def post_build(self, container_builder, container):
         dispatcher = container.get('ioc.extra.event_dispatcher')
+        for id in container_builder.get_ids_by_tag('event.subscriber'):
+            subscriber = container.get(id)
+            dispatcher.add_subscriber(subscriber)
 
         for id in container_builder.get_ids_by_tag('event.listener'):
             definition = container_builder.get(id)

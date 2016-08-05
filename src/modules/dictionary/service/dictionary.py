@@ -52,6 +52,8 @@ class DictionaryManager(object):
                 with _StarDictIfo(source, self) as info:
                     with Dictionary(source) as dictionary:
                         self._dictionaries.append(dictionary)
+            self._dictionaries.sort(key=lambda dictionary: dictionary.word_count, reverse=True)
+
 
     @property
     def dictionaries(self):
@@ -60,14 +62,20 @@ class DictionaryManager(object):
 
     def suggestions(self, match):
         for dictionary in self._dictionaries:
-            for word in dictionary.matches(match):
-                yield word
+            matches = dictionary.matches(match)
+            if len(matches) is not 0:
+                for word, index, length in matches:
+                    yield word
+                break
 
     def translate(self, word):
-        translations = []
         for dictionary in self.dictionaries:
-            if dictionary.has_key(word):
-                translation = dictionary.get(word)
-                if translation is not None:
-                    translations.append(translation)
-        return translations
+            translation = dictionary.get(word)
+            if len(translation) is not 0:
+                yield translation
+
+    def translate_one(self, word):
+        for dictionary in self.dictionaries:
+            translation = dictionary.get(word)
+            if len(translation) is not 0:
+                return translation

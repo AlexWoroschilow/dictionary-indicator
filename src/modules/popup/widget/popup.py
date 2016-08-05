@@ -1,62 +1,83 @@
-import os
+# -*- coding: utf-8 -*-
+# Copyright 2015 Alex Woroschilow (alex.woroschilow@gmail.com)
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 import wx
 import wx.html2
-import string
+import wx.lib.scrolledpanel as scrolled
 
 
 class TranslationPopup(wx.PopupWindow):
-    def __init__(self, parent, style):
-        wx.PopupWindow.__init__(self, None, style)
+    _transformation = {
+        '<k>': '<span foreground="#006400" size="x-large">',
+        '</k>': '</span>',
+        '<kref>': '<span foreground="grey">',
+        '</kref>': '</span>',
+        '<dtrn>': '<small>',
+        '</dtrn>': '</small>',
+        '<co>': '<i>',
+        '</co>': '</i>',
+        '<abr>': '<span foreground="blue">',
+        '</abr>': '</span>',
+        '<ex>': '<span foreground="#a0a0a0">',
+        '</ex>': '</span>',
+        '<tr>': '<i>',
+        '</tr>': '</i>',
+        '<c>': '<i>',
+        '</c>': '</i>',
+    }
 
-        self._browser = wx.html2.WebView.New(self)
-        self._browser.SetPage("This is a special kind of top level\n", "")
+    def __init__(self):
+        wx.PopupWindow.__init__(self, None, wx.STAY_ON_TOP | wx.FRAME_SHAPED)
+        self.SetBackgroundColour("#f0f0f0")
+        self.SetTransparent(240)
+        self.SetSize(wx.Size(280, 300))
 
-        sizer2 = wx.BoxSizer(wx.HORIZONTAL)
-        sizer2.Add(self._browser, 3, wx.EXPAND)
-        self.SetSizer(sizer2)
+        self.Bind(wx.EVT_CHAR_HOOK, self.OnKeyUP)
+        self.Bind(wx.EVT_LEAVE_WINDOW, self.OnKeyUP)
+        self.Bind(wx.EVT_LEFT_DOWN, self.OnKeyUP)
 
-        wx.CallAfter(self.Refresh)
+        self._panel = scrolled.ScrolledPanel(self, -1, style=wx.VSCROLL)
+        self._panel.SetAutoLayout(1)
+        self._panel.SetupScrolling()
+        self._panel.SetSize(wx.Size(280, 300))
 
-    def setTranslations(self, translations):
-        theme = "%s/themes/popup.html" % os.getcwd()
-        with open(theme, 'r') as template:
-            translation = string.join(translations, '')
-            self._browser.SetPage(template.read() % translation, "text/html")
+        self._panel.Bind(wx.EVT_CHAR_HOOK, self.OnKeyUP)
+        self._panel.Bind(wx.EVT_LEAVE_WINDOW, self.OnKeyUP)
+        self._panel.Bind(wx.EVT_LEFT_DOWN, self.OnKeyUP)
 
+        self._browser = wx.StaticText(self._panel, style=wx.TE_WORDWRAP)
+        self._browser.SetMinSize(wx.Size(260, 1500))
+        self._browser.Wrap(240)
 
-class ChildFrame(wx.Frame):
-    def __init__(self, parent=None, text=None):
-        wx.Frame.__init__(self, None, size=(150,100), title='ChildFrame')
-        self.SetSize((400, 200))
-        self.SetMinSize((400, 100))
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(self._browser, 1, wx.EXPAND, border=30)
+        self._panel.SetSizer(sizer)
 
-        self._browser = wx.TextCtrl(self, -1, pos=(0,0), size=(100,20), style=wx.DEFAULT)
-        self._browser.write(text)
+        sizer_panel = wx.BoxSizer(wx.HORIZONTAL)
+        sizer_panel.Add(self._panel)
 
-        sizer2 = wx.BoxSizer(wx.HORIZONTAL)
-        sizer2.Add(self._browser, 3, wx.EXPAND)
-        self.SetSizer(sizer2)
+    @property
+    def translations(self):
+        pass
 
-    def SetTranslations(self, translations):
-        theme = "%s/themes/popup.html" % os.getcwd()
-        with open(theme, 'r') as template:
-            translation = string.join(translations, '')
-            self._browser.write(translation)
-            # self._browser.SetPage(template.read() % translation, "text/html")
+    @translations.setter
+    def translations(self, text):
+        if not len(text):
+            return None
 
-            # def onbutton(self, evt):
-    #     text = self.txt.GetValue()
-    #     self.parent.txt.write('Child says: %s' %text)
+        for replace, to in self._transformation.iteritems():
+            text = text.replace(replace, to)
+        self._browser.SetLabelMarkup(text)
+        self._panel.Scroll(0, 0)
 
-
-class TranslationPopupFrame(wx.Frame):
-
-    def __init__(self, parent, translations):
-        wx.Frame.__init__(self, parent, title="Test Popup")
-
-        win = TranslationPopup(self, wx.SIMPLE_BORDER)
-        win.SetPosition(wx.GetMousePosition())
-        win.setTranslations(string.join(translations, ''))
-
-    def on_test(self, event):
-        print ("asdf")
+    def OnKeyUP(self, event):
+        self.Hide()

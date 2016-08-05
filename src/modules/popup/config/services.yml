@@ -1,3 +1,9 @@
 services:
-  translation_page:
-    class: src.modules.translation.widget.notebook.TranslationPage
+  popup.subscriber_dictionary:
+    class: modules.popup.event.dictionary.PopupEventSubscriber
+    calls:
+         - [ set_container, [ "@service_container" ]]
+    tags:
+        event.subscriber:
+          - [ ]
+

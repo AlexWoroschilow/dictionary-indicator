@@ -19,7 +19,8 @@ class TranslationPage(wx.Panel):
     _callback_on_select = None
     _callback_on_search = None
 
-    def __init__(self, parent=None, on_search=None, on_select=None):
+    def __init__(self, parent=None, on_search=None, on_select=None, on_scan=None):
+        self._callback_on_scan = on_scan
         self._callback_on_search = on_search
         self._callback_on_select = on_select
         wx.Panel.__init__(self, parent)
@@ -42,10 +43,18 @@ class TranslationPage(wx.Panel):
         sizer2.AddSpacer(1)
         sizer2.Add(self._browser, 3, wx.EXPAND)
 
+        self._checkbox = wx.CheckBox(self, label='Scan and translate clipboard')
+        self.Bind(wx.EVT_CHECKBOX, self.on_scan_checked, self._checkbox)
+
+        sizer4 = wx.BoxSizer(wx.HORIZONTAL)
+        sizer4.Add(self._checkbox, 1, wx.ALL)
+
         sizer3 = wx.BoxSizer(wx.VERTICAL)
         sizer3.Add(sizer1, 1, wx.EXPAND)
         sizer3.AddSpacer(1)
-        sizer3.Add(sizer2, 20, wx.EXPAND)
+        sizer3.Add(sizer2, 30, wx.EXPAND)
+        sizer3.AddSpacer(1)
+        sizer3.Add(sizer4, 1, wx.EXPAND)
         self.SetSizer(sizer3)
 
     @property
@@ -57,7 +66,7 @@ class TranslationPage(wx.Panel):
         self._suggestions.ClearAll()
         for index, word in enumerate(value):
             self._suggestions.InsertStringItem(index, word)
-            if index >= 30:
+            if index > 30:
                 break
 
     @property
@@ -73,17 +82,27 @@ class TranslationPage(wx.Panel):
         pass
 
     @translations.setter
-    def translations(self, value):
+    def translations(self, translations):
         theme = "%s/themes/translation.html" % os.getcwd()
         with open(theme, 'r') as template:
-            translation = string.join(value, '')
-            self._browser.SetPage(template.read() % translation, "text/html")
+            for translation in translations:
+                if translation is not None:
+                    self._browser.SetPage(template.read() % translation, "text/html")
+                    return None
+
+
+    def on_scan_checked(self, event):
+        if self._callback_on_scan is not None:
+            checkbox = event.GetEventObject()
+            self._callback_on_scan(checkbox.GetValue())
 
     def on_search_selected(self, event):
-        word = self._search.GetValue()
-        self._callback_on_search(word.encode('utf-8'))
+        if self._callback_on_search is not None:
+            word = self._search.GetValue()
+            self._callback_on_search(word.encode('utf-8'))
 
     def on_suggestion_selected(self, event):
-        index = self._suggestions.GetFocusedItem()
-        word = self._suggestions.GetItemText(index)
-        self._callback_on_select(word.encode('utf-8'))
+        if self._callback_on_select is not None:
+            index = self._suggestions.GetFocusedItem()
+            word = self._suggestions.GetItemText(index)
+            self._callback_on_select(word.encode('utf-8'))

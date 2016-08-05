@@ -2,4 +2,19 @@ services:
   history:
     class: utl.history.DictionaryHistory
     arguments:
-      - "~/history.csv"
+      - "./history.csv"
+  history.subscriber_gui:
+    class: modules.history.event.kernel.KernelEventSubscriber
+    calls:
+         - [ set_container, [ "@service_container" ]]
+    tags:
+        event.subscriber:
+          - [ ]
+  history.subscriber_dictionary:
+    class: modules.history.event.dictionary.HistoryEventSubscriber
+    calls:
+         - [ set_container, [ "@service_container" ]]
+    tags:
+        event.subscriber:
+          - [ ]
+

@@ -16,8 +16,8 @@ import glob
 import wx
 import imp
 import logging
-from src.modules import *
-import src.modules as Modules
+from modules import *
+import modules as Modules
 import inspect
 
 
@@ -55,10 +55,14 @@ class WxGuiKernel(wx.App):
             self._logger.debug("loaded: %s" % module)
             module.on_loaded(container)
 
-        event_dispatcher = container.get('event_dispatcher')
+        event_dispatcher = container.get('ioc.extra.event_dispatcher')
         event_dispatcher.dispatch('kernel_event.load', event_dispatcher.new_event())
 
         self._container = container
+
+    @staticmethod
+    def __module_loader(source):
+        return imp.load_source('Loader', source)
 
     # Get service from service container
     # this is just a short notation
@@ -68,54 +72,51 @@ class WxGuiKernel(wx.App):
             return self._container.get(name)
         return None
 
-    @staticmethod
-    def __module_loader(source):
-        return imp.load_source('Loader', source)
+    def MainLoop(self):
+        dispatcher = self.get('ioc.extra.event_dispatcher')
 
-    def run(self, options=None, args=None):
-        dispatcher = self.get('event_dispatcher')
-
-        event = dispatcher.new_event(options)
+        event = dispatcher.new_event()
         dispatcher.dispatch('kernel_event.start', event)
-        self.MainLoop()
+
+        return wx.App.MainLoop(self)
 
 
 class WxWindowKernel(WxGuiKernel):
     _notebook = None
 
-    def __init__(self, options=None, args=None):
-        WxGuiKernel.__init__(self, options, args)
-
-    def run(self, options=None, args=None):
-        dispatcher = self.get('event_dispatcher')
-
-        event = dispatcher.new_event(options)
-        dispatcher.dispatch('kernel_event.start', event)
+    def MainLoop(self):
+        dispatcher = self.get('ioc.extra.event_dispatcher')
+        dispatcher.dispatch('kernel_event.start', dispatcher.new_event([]))
 
         window = wx.Frame(None)
         window.SetSize((600, 600))
         window.SetMinSize((600, 600))
+        window.Bind(wx.EVT_CLOSE, self.Destroy)
 
         panel = wx.Panel(window)
         self._notebook = wx.Notebook(panel)
         self.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.on_page_changed, self._notebook)
 
-        event = dispatcher.new_event(self._notebook)
-        dispatcher.dispatch('gui_event.notebook', event)
+        dispatcher.dispatch('kernel_event.window_tab', dispatcher.new_event(self._notebook))
 
         sizer = wx.BoxSizer()
         panel.SetSizer(sizer)
         sizer.Add(self._notebook, 1, wx.EXPAND)
         window.Show()
 
-        self.MainLoop()
+        self.SetTopWindow(window)
+
+        return wx.App.MainLoop(self)
+
+    def Destroy(self, event=None):
+        dispatcher = self.get('ioc.extra.event_dispatcher')
+        dispatcher.dispatch('kernel_event.stop', dispatcher.new_event())
+
+        self.ExitMainLoop()
 
     def on_page_changed(self, event):
-        dispatcher = self.get('event_dispatcher')
-
         previous = self._notebook.GetPage(event.GetOldSelection())
         current = self._notebook.GetPage(event.GetSelection())
 
-        event = dispatcher.new_event((previous, current))
-        dispatcher.dispatch('gui_event.notebook_changed', event)
-
+        dispatcher = self.get('ioc.extra.event_dispatcher')
+        dispatcher.dispatch('kernel_event.notebook_changed', dispatcher.new_event((previous, current)))

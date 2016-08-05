@@ -10,24 +10,23 @@
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-from src.modules.history.widget.notebook import *
-import logging
-import threading
-import wx
+from modules.history.widget.notebook import *
 
 
-class GuiEventSubscriber(object):
+class KernelEventSubscriber(object):
     _container = None
-    _logger = None
 
-    def __init__(self, container=None):
-        self._logger = logging.getLogger('window_gtk')
+    @property
+    def container(self):
+        return self._container
+
+    def set_container(self, container):
         self._container = container
 
     @property
     def subscribed_events(self):
-        yield ('gui_event.notebook', ['on_notebook', 1])
-        yield ('gui_event.notebook_changed', ['on_notebook_changed', 1])
+        yield ('kernel_event.window_tab', ['on_notebook', 1])
+        yield ('kernel_event.notebook_changed', ['on_notebook_changed', 1])
 
     # Append custom page to common notebook
     def on_notebook(self, event, dispatcher):
@@ -36,7 +35,7 @@ class GuiEventSubscriber(object):
     # Perform some actions if notebook
     # have been changed somehow
     def on_notebook_changed(self, event, dispatcher):
-        service_history = self._container.get('history')
+        service_history = self.container.get('history')
 
         (previous, current) = event.data
         if current.__class__.__name__.find('HistoryPage') != -1:

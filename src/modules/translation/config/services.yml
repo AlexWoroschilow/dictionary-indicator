@@ -1,3 +1,9 @@
 services:
-  translation_page:
-    class: src.modules.translation.widget.notebook.TranslationPage
+  translation.subscriber_gui:
+    class: modules.translation.event.kernel.KernelEventSubscriber
+    calls:
+         - [ set_container, [ "@service_container" ]]
+    tags:
+        event.subscriber:
+          - [ ]
+

@@ -9,7 +9,6 @@
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-import os
 import wx
 import wx.html2
 
@@ -18,11 +17,28 @@ class DictionaryPage(wx.Panel):
     def __init__(self, parent):
         wx.Panel.__init__(self, parent)
 
-        self._browser = wx.html2.WebView.New(self)
-        theme = "%s/themes/statistic.html" % os.getcwd()
-        with open(theme, 'r') as template:
-            self._browser.SetPage(template.read(), "text/html")
+        self._history = wx.ListCtrl(self, style=wx.LC_LIST | wx.LC_HRULES)
+        self._history.InsertColumn(0, 'Dictionary')
+        self._history.SetColumnWidth(0, 300)
 
-        sizer1 = wx.BoxSizer(wx.VERTICAL)
-        sizer1.Add(self._browser, 1, wx.EXPAND, 1)
-        self.SetSizer(sizer1)
+        self._label = wx.StaticText(self, -1, label='loading...')
+
+        sizer3 = wx.BoxSizer(wx.VERTICAL)
+        sizer3.Add(self._history, 40, wx.EXPAND)
+        sizer3.AddSpacer(1)
+        sizer3.Add(self._label, 1, wx.EXPAND)
+
+        self.SetSizer(sizer3)
+
+    @property
+    def dictionaries(self):
+        pass
+
+    @dictionaries.setter
+    def dictionaries(self, collection):
+        for index, dictionary in enumerate(collection):
+            self._history.InsertStringItem(index, 'line', 1)
+            self._history.SetStringItem(index, 0, dictionary.name)
+
+        message = "%s dictionaries found" % self._history.GetItemCount()
+        self._label.SetLabelText(message)

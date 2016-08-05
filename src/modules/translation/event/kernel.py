@@ -10,25 +10,29 @@
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-from src.modules.translation.widget.notebook import *
+from modules.translation.widget.notebook import *
 import logging
 
 
-class GuiEventSubscriber(object):
+class KernelEventSubscriber(object):
     _container = None
     _page = None
 
-    def __init__(self, container=None):
+    @property
+    def container(self):
+        return self._container
+
+    def set_container(self, container):
         self._container = container
 
     @property
     def subscribed_events(self):
-        yield ('gui_event.notebook', ['on_notebook', 0])
-        yield ('dict_event.clipboard', ['on_clipboard', 0])
+        yield ('kernel_event.window_tab', ['on_window_tab', 0])
+        yield ('clipboard_event.changed', ['on_clipboard_changed', 0])
 
-    def on_notebook(self, event, dispatcher):
+    def on_window_tab(self, event, dispatcher):
 
-        self._page = TranslationPage(event.data, self.on_search, self.on_suggestion)
+        self._page = TranslationPage(event.data, self.on_search, self.on_suggestion, self.on_toggle_scaning)
         event.data.AddPage(self._page, "Translation")
 
         dictionary = self._container.get('dictionary')
@@ -41,18 +45,17 @@ class GuiEventSubscriber(object):
     def on_search(self, word=None):
 
         dictionary = self._container.get('dictionary')
-        event_dispatcher = self._container.get('event_dispatcher')
+        event_dispatcher = self._container.get('ioc.extra.event_dispatcher')
         if self._page is None:
             return None
 
-        translations = dictionary.translate(word)
-        self._page.translations = translations
-
         suggestions = dictionary.suggestions(word)
-        self._page.suggestions = suggestions
-
-        if not len(word) or not len(translations):
+        translations = dictionary.translate(word)
+        if not len(word) or translations is None:
             return None
+
+        self._page.suggestions = suggestions
+        self._page.translations = translations
 
         event = event_dispatcher.new_event([word, translations])
         event_dispatcher.dispatch('dictionary.translation', event)
@@ -62,28 +65,27 @@ class GuiEventSubscriber(object):
     # and clicked on it
     def on_suggestion(self, word=None):
         dictionary = self._container.get('dictionary')
-        event_dispatcher = self._container.get('event_dispatcher')
+        event_dispatcher = self._container.get('ioc.extra.event_dispatcher')
         if self._page is None:
             return None
 
         translations = dictionary.translate(word)
-        self._page.translations = translations
-
-        if translations is None or not len(translations):
+        if translations is None:
             return None
+
+        self._page.translations = translations
 
         event = event_dispatcher.new_event([word, translations])
         event_dispatcher.dispatch('dictionary.translation', event)
 
-    def on_clipboard(self, event, dispatcher):
-        """
-        Show translation from clipboard
-        if main window presented and clipboard
-        is not empty
-        """
-        dictionary = self._container.get('dictionary')
-        if self._page is None:
-            return None
+    # Enable or disable clipboard scanning
+    def on_toggle_scaning(self, scan=False):
+        event_dispatcher = self._container.get('ioc.extra.event_dispatcher')
+        event = event_dispatcher.new_event(scan)
+        event_dispatcher.dispatch('kernel_event.toggle_scanning', event)
 
+
+    # Catch clipboard event (clipboard text has been changed)
+    # and display popup with a translation, if it has been found
+    def on_clipboard_changed(self, event, dispatcher):
         self._page.word = event.data
-        self._page.translations = dictionary.translate(event.data)

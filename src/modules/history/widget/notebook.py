@@ -9,11 +9,10 @@
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-import os
 import wx
-import string
 import wx.html2
 import wx.lib.mixins.listctrl as listmix
+from dateutil.parser import parse
 
 
 class EditableListCtrl(wx.ListCtrl, listmix.TextEditMixin):
@@ -33,8 +32,13 @@ class HistoryPage(wx.Panel):
         self._history.SetColumnWidth(1, 200)
         self.Bind(wx.EVT_LIST_KEY_DOWN, self.on_key_pressed, self._history)
 
+        self._label = wx.StaticText(self, -1, label='loading...')
+
         sizer3 = wx.BoxSizer(wx.VERTICAL)
-        sizer3.Add(self._history, 1, wx.EXPAND)
+        sizer3.Add(self._history, 40, wx.EXPAND)
+        sizer3.AddSpacer(1)
+        sizer3.Add(self._label, 1, wx.EXPAND)
+
 
         self.SetSizer(sizer3)
 
@@ -46,7 +50,8 @@ class HistoryPage(wx.Panel):
             date = self._history.GetItemText(item, 0)
             word = self._history.GetItemText(item, 1)
             if len(date) and len(word):
-                yield [date.encode('utf-8'), word.encode('utf-8')]
+                datetime = parse(date.encode('utf-8'), fuzzy=True)
+                yield [datetime.strftime("%Y.%m.%d %H:%M:%S"), word.encode('utf-8')]
             if item == -1:
                 break
 
@@ -58,16 +63,62 @@ class HistoryPage(wx.Panel):
             self._history.SetStringItem(index, 0, line[0])
             self._history.SetStringItem(index, 1, line[1])
 
+        message = "%s records found" % self._history.GetItemCount()
+        self._label.SetLabelText(message)
+
     def on_key_pressed(self, event):
-        if event.GetKeyCode() == wx.WXK_DELETE:
-            item = self._history.GetFocusedItem()
-            self._history.Select(self._history.GetNextItem(item))
+        if event.GetKeyCode() in [wx.WXK_DELETE]:
+            self.on_delete_pressed(event)
+            message = "%s records found" % self._history.GetItemCount()
+            self._label.SetLabelText(message)
+            return None
+
+        if event.GetKeyCode() in [wx.WXK_RETURN]:
+            return self.on_enter_pressed(event)
+
+        if event.GetKeyCode() in [wx.WXK_UP, wx.WXK_PAGEUP]:
+            return self.on_up_pressed(event)
+
+        if event.GetKeyCode() in [wx.WXK_DOWN, wx.WXK_PAGEDOWN]:
+            return self.on_down_pressed(event)
+
+    def on_delete_pressed(self, event):
+        item = self._history.GetFocusedItem()
+        above = self._history.GetNextItem(item, wx.LIST_NEXT_ABOVE)
+        if above not in [-1]:
+            self._history.Select(above)
             self._history.DeleteItem(item)
             return event.Skip()
 
-        if event.GetKeyCode() in (wx.WXK_DOWN, wx.WXK_UP):
-            item = self._history.GetFocusedItem()
-            next = self._history.GetNextItem(item, wx.LIST_NEXT_ABOVE)
-            self._history.Select(item, False)
-            self._history.Select(next, True)
+        below = self._history.GetNextItem(item, wx.LIST_NEXT_BELOW)
+        if below not in [1]:
+            self._history.Select(below)
+            self._history.DeleteItem(item)
             return event.Skip()
+
+        return None
+
+    def on_enter_pressed(self, event):
+        item = self._history.GetFocusedItem()
+
+    def on_up_pressed(self, event):
+        item = self._history.GetFocusedItem()
+        below = self._history.GetNextItem(item, wx.LIST_NEXT_BELOW)
+
+        if below in [1]:
+            return None
+
+        self._history.Select(item, False)
+        self._history.Select(below, True)
+        return event.Skip()
+
+    def on_down_pressed(self, event):
+        item = self._history.GetFocusedItem()
+        above = self._history.GetNextItem(item, wx.LIST_NEXT_ABOVE)
+
+        if above in [-1]:
+            return None
+
+        self._history.Select(item, False)
+        self._history.Select(above, True)
+        return event.Skip()

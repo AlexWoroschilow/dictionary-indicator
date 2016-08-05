@@ -15,14 +15,18 @@
 class HistoryEventSubscriber(object):
     _container = None
 
-    def __init__(self, container=None):
+    @property
+    def container(self):
+        return self._container
+
+    def set_container(self, container):
         self._container = container
 
     @property
     def subscribed_events(self):
-        yield ('dictionary.translation', ('on_dictionary_translation'))
+        yield ('dictionary.translation', ['on_dictionary_translation', 0])
 
     def on_dictionary_translation(self, event, dispatcher):
         word, translation = event.data
-        history = self._container.get('history')
+        history = self.container.get('history')
         history.add_history(word)

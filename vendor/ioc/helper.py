@@ -135,7 +135,7 @@ def build(files, logger=None, parameters=None):
         }
 
     container_builder = ioc.component.ContainerBuilder(logger=logger)
-        
+
     loaders = [
         ioc.loader.YamlLoader()
     ]

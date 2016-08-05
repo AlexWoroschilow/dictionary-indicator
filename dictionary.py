@@ -17,6 +17,7 @@ import sys
 
 sys.path.append('app')
 sys.path.append('vendor')
+sys.path.append('src')
 
 import app
 import optparse
@@ -28,7 +29,9 @@ if __name__ == "__main__":
     parser.add_option("-w", "--word", default="baum", dest="word", help="word to translate")
 
     (options, args) = parser.parse_args()
-    logging.basicConfig(level=logging.INFO)
+
+    format = '[%(relativeCreated)d][%(name)s] %(levelname)s - %(message)s'
+    logging.basicConfig(level=logging.DEBUG, format=format)
 
     application = app.WxWindowKernel(options, args)
-    application.run(options, args)
+    application.MainLoop()

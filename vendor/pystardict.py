@@ -245,10 +245,10 @@ class _StarDictIdxSQLite(_StarDictIdx):
         database = "%s.db" % dict_prefix
         if os.path.isfile(database):
             self._connection = sqlite3.connect(database, check_same_thread=False)
+            self._connection.text_factory = str
             return
 
         """ prepare main dict and parsing parameters """
-        self._idx = {}
         idx_offset_bytes_size = int(container.ifo.idxoffsetbits / 8)
         idx_offset_format = {4: 'L', 8: 'Q',}[idx_offset_bytes_size]
         idx_cords_bytes_size = idx_offset_bytes_size + 4
@@ -263,8 +263,8 @@ class _StarDictIdxSQLite(_StarDictIdx):
 
         self._connection = sqlite3.connect(database, check_same_thread=False)
         self._connection.text_factory = str
-        self._connection.execute('''CREATE TABLE words (word text, start integer, length integer)''')
-        self._connection.execute('''CREATE INDEX IDX_WORD ON words(word)''')
+        self._connection.execute("CREATE TABLE words (word text, start integer, length integer)")
+        self._connection.execute("CREATE INDEX IDX_WORD ON words(word)")
 
         """ unpack parsed records """
         for index, matched_record in enumerate(matched_records):
@@ -282,29 +282,34 @@ class _StarDictIdxSQLite(_StarDictIdx):
             self._connection.execute("INSERT INTO words VALUES (?, ?, ?)", (word, start, length))
         self._connection.commit()
 
-    def matches(self, word):
-        collection = []
-        query = "SELECT * FROM words WHERE word LIKE '%s' limit 100" % ("%" + word + "%")
-        pointer = self._connection.execute(query)
-        for result in pointer.fetchall():
-            word, start, length = result
-            collection.append(word)
-        return collection
+    def matches(self, word, limit=30):
+        query = "SELECT * FROM words WHERE word LIKE ? limit ?"
+        cursor = self._connection.cursor()
+        cursor.execute(query, [word + "%", limit])
+
+        response = cursor.fetchall()
+        if response is not None:
+            return response
 
     def __getitem__(self, word):
-        query = "SELECT * FROM words WHERE word = '%s'"
-        pointer = self._connection.execute(query % word)
-        for result in pointer.fetchall():
-            word, start, length = result
-            return (start, length)
-        return None
+        query = "SELECT * FROM words WHERE word = ?"
+        cursor = self._connection.cursor()
+        cursor.execute(query, [word])
+
+        response = cursor.fetchone()
+        if response is not None:
+            word, start, length = response
+            return [start, length]
 
     def __contains__(self, word):
-        query = "SELECT COUNT(*) FROM words WHERE word = '%s'"
-        pointer = self._connection.execute(query % word)
-        for result in pointer.fetchone():
-            if result > 0:
-                return True
+        query = "SELECT COUNT(*) FROM words WHERE word = ?"
+        cursor = self._connection.cursor()
+        cursor.execute(query, [word])
+
+        response = cursor.fetchone()
+        if response is not None:
+            count, = response
+            return count > 0
         return False
 
 
@@ -443,9 +448,6 @@ class _StarDictDict(object):
     """
 
     def __init__(self, dict_prefix, container):
-        """
-        opens regular or dziped .dict file 
-        """
         self._container = container
 
         dict_filename = '%s.dict' % dict_prefix
@@ -457,12 +459,10 @@ class _StarDictDict(object):
             raise Exception('.dict file does not exists')
 
     def __getitem__(self, word):
-        """
-        returns data from .dict for word
-        """
-
         # getting word data coordinats
         cords = self._container.idx[word]
+        if cords is None:
+            return None
 
         # seeking in file for data
         self._file.seek(cords[0])
@@ -504,30 +504,20 @@ class Dictionary(dict):
     """
 
     def __init__(self, filename_prefix):
-        """
-        filename_prefix: path to dictionary files without files extensions
-        
-        initializes new StarDictDict instance from stardict dictionary files
-        provided by filename_prefix
-        """
+        self._dict_cache = {}
+        self._match_cache = {}
 
-        # reading somedict.ifo
         self.ifo = _StarDictIfo(dict_prefix=filename_prefix, container=self)
-
-        # reading somedict.idx or somedict.idx.gz
         self.idx = _StarDictIdxSQLite(dict_prefix=filename_prefix, container=self)
-
-        # reading somedict.dict or somedict.dict.dz
         self.dict = _StarDictDict(dict_prefix=filename_prefix, container=self)
-
-        # reading somedict.syn (optional)
         self.syn = _StarDictSyn(dict_prefix=filename_prefix, container=self)
 
-        # initializing cache
-        self._dict_cache = {}
-
-    def matches(self, match):
-        return self.idx.matches(match)
+    def matches(self, k):
+        if k in self._match_cache:
+            return self._match_cache[k]
+        value = self.idx.matches(k)
+        self._match_cache[k] = value
+        return value
 
     def __enter__(self):
         return self
@@ -535,191 +525,50 @@ class Dictionary(dict):
     def __exit__(self, type, value, traceback):
         pass
 
-    def __cmp__(self, y):
-        """
-        raises NotImplemented exception
-        """
-        raise NotImplementedError()
-
     def __contains__(self, k):
-        """
-        returns True if x.idx has a word k, else False
-        """
         return k in self.idx
 
     def __delitem__(self, k):
-        """
-        frees cache from word k translation
-        """
         del self._dict_cache[k]
 
     def __eq__(self, y):
-        """
-        returns True if hashlib.md5(x.idx) is equal to hashlib.md5(y.idx), else False
-        """
         return self.idx.__eq__(y.idx)
 
-    def __ge__(self, y):
-        """
-        raises NotImplemented exception
-        """
-        raise NotImplementedError()
-
     def __getitem__(self, k):
-        """
-        returns translation for word k from cache or not and then caches
-        """
         if k in self._dict_cache:
             return self._dict_cache[k]
-        else:
-            value = self.dict[k]
-            self._dict_cache[k] = value
-            return value
-
-    def __gt__(self, y):
-        """
-        raises NotImplemented exception
-        """
-        raise NotImplementedError()
-
-    def __iter__(self):
-        """
-        raises NotImplemented exception
-        """
-        raise NotImplementedError()
-
-    def __le__(self):
-        """
-        raises NotImplemented exception
-        """
-        raise NotImplementedError()
+        value = self.dict[k]
+        self._dict_cache[k] = value
+        return value
 
     def __len__(self):
-        """
-        returns number of words provided by wordcount parameter of the x.ifo
-        """
         return self.ifo.wordcount
 
-    def __lt__(self):
-        """
-        raises NotImplemented exception
-        """
-        raise NotImplementedError()
-
     def __ne__(self, y):
-        """
-        returns True if hashlib.md5(x.idx) is not equal to hashlib.md5(y.idx), else False
-        """
         return not self.__eq__(y)
 
     def __repr__(self):
-        """
-        returns classname and bookname parameter of the x.ifo
-        """
         return u'%s %s' % (self.__class__, self.ifo.bookname)
 
-    def __setitem__(self, k, v):
-        """
-        raises NotImplemented exception
-        """
-        raise NotImplementedError()
-
     def clear(self):
-        """
-        clear dict cache 
-        """
-        self._dict_cache = dict()
+        self._dict_cache = {}
+        self._match_cache = {}
 
     def get(self, k, d=''):
-        """
-        returns translation of the word k from self.dict or d if k not in x.idx
-        
-        d defaults to empty string
-        """
-        return k in self and self[k] or d
+        return self[k] or d
 
     def has_key(self, k):
-        """
-        returns True if self.idx has a word k, else False
-        """
         return k in self
-
-    def items(self):
-        """
-        raises NotImplemented exception
-        """
-        raise NotImplementedError()
-
-    def iteritems(self):
-        """
-        raises NotImplemented exception
-        """
-        raise NotImplementedError()
-
-    def iterkeys(self):
-        """
-        raises NotImplemented exception
-        """
-        raise NotImplementedError()
-
-    def itervalues(self):
-        """
-        raises NotImplemented exception
-        """
-        raise NotImplementedError()
-
-    def keys(self):
-        """
-        raises NotImplemented exception
-        """
-        raise NotImplementedError()
-
-    def pop(self, k, d):
-        """
-        raises NotImplemented exception
-        """
-        raise NotImplementedError()
-
-    def popitem(self):
-        """
-        raises NotImplemented exception
-        """
-        raise NotImplementedError()
-
-    def setdefault(self, k, d):
-        """
-        raises NotImplemented exception
-        """
-        raise NotImplementedError()
-
-    def update(self, E, **F):
-        """
-        raises NotImplemented exception
-        """
-        raise NotImplementedError()
-
-    def values(self):
-        """
-        raises NotImplemented exception
-        """
-        raise NotImplementedError()
 
     @property
     def name(self):
         return self.ifo.bookname
 
-    def fromkeys(self, S, v=None):
-        """
-        raises NotImplemented exception
-        """
-        raise NotImplementedError()
-
+    @property
+    def word_count(self):
+        return self.ifo.wordcount
 
 def open_file(regular, gz):
-    """
-    Open regular file if it exists, gz file otherwise.
-    If no file exists, rise ValueError.
-    """
     try:
         return open(regular, 'rb')
     except IOError:
