@@ -49,12 +49,17 @@ class KernelEventSubscriber(object):
         if self._page is None:
             return None
 
-        suggestions = dictionary.suggestions(word)
-        translations = dictionary.translate(word)
-        if not len(word) or translations is None:
+        if len(word) and len(word) >= 3:
+            suggestions = dictionary.suggestions(word)
+            self._page.suggestions = suggestions
+
+        if not len(word):
             return None
 
-        self._page.suggestions = suggestions
+        translations = dictionary.translate(word)
+        if translations is None:
+            return None
+
         self._page.translations = translations
 
         event = event_dispatcher.new_event([word, translations])

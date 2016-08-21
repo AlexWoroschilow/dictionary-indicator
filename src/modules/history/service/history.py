@@ -15,7 +15,7 @@ from logging import *
 import string
 
 
-class DictionaryHistory(object):
+class CSVFileHistory(object):
     _logger = None
     _logger_handler = None
     _logfile = None
@@ -44,16 +44,16 @@ class DictionaryHistory(object):
     def history(self):
         with open(self._logfile, 'r') as stream:
             for line in reversed(stream.readlines()):
-                fields = line.split(';')
-                if len(fields) >= 2:
-                    yield fields
+                yield line.rstrip().split(';')
         stream.close()
 
     @history.setter
     def history(self, collection):
         history = []
         for record in collection:
-            history.append(string.join(record, ';'))
+            line = string.join(record, ';')
+            history.append("%s\n" % line)
+
         with open(self._logfile, 'w+') as stream:
             stream.writelines(reversed(history))
             stream.close()

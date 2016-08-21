@@ -50,11 +50,12 @@ class KernelEventSubscriber(object):
         return None
 
     def on_clipboard(self, event):
-        if event.data is None or not len(event.data):
+        text = event.data
+        if text is None or not len(text):
             return None
 
         dispatcher = self.container.get('ioc.extra.event_dispatcher')
-        dispatcher.dispatch('clipboard_event.changed', dispatcher.new_event(event.data))
+        dispatcher.dispatch('clipboard_event.changed', dispatcher.new_event(text.strip()))
 
     def on_stop(self, event, dispatcher):
         if self._clipboard is None:

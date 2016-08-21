@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Copyright 2015 Alex Woroschilow (alex.woroschilow@gmail.com)
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,6 +17,8 @@ import wx.html2
 
 
 class TranslationPage(wx.Panel):
+    _show_all = False
+
     _callback_on_select = None
     _callback_on_search = None
 
@@ -28,8 +31,15 @@ class TranslationPage(wx.Panel):
         self._search = wx.TextCtrl(self, wx.ID_ANY, "")
         self.Bind(wx.EVT_TEXT, self.on_search_selected, self._search)
 
+        self._scan_clipboard = wx.CheckBox(self, label='Scan and translate clipboard')
+        self.Bind(wx.EVT_CHECKBOX, self.on_scan_checked, self._scan_clipboard)
+
         sizer1 = wx.BoxSizer(wx.HORIZONTAL)
         sizer1.Add(self._search, 1, wx.ALL)
+        sizer1.Add(self._scan_clipboard, 1, wx.ALL)
+
+        self._checkbox_show_all = wx.CheckBox(self, label='Show results from all available dictionaries')
+        self.Bind(wx.EVT_CHECKBOX, self.on_show_all, self._checkbox_show_all)
 
         self._browser = wx.html2.WebView.New(self)
 
@@ -41,20 +51,17 @@ class TranslationPage(wx.Panel):
         sizer2 = wx.BoxSizer(wx.HORIZONTAL)
         sizer2.Add(self._suggestions, 1, wx.EXPAND)
         sizer2.AddSpacer(1)
-        sizer2.Add(self._browser, 3, wx.EXPAND)
-
-        self._checkbox = wx.CheckBox(self, label='Scan and translate clipboard')
-        self.Bind(wx.EVT_CHECKBOX, self.on_scan_checked, self._checkbox)
-
-        sizer4 = wx.BoxSizer(wx.HORIZONTAL)
-        sizer4.Add(self._checkbox, 1, wx.ALL)
+        sizer2.Add(self._browser, 4, wx.EXPAND)
 
         sizer3 = wx.BoxSizer(wx.VERTICAL)
-        sizer3.Add(sizer1, 1, wx.EXPAND)
+        sizer3.Add(self._search, 1, wx.EXPAND)
+        sizer3.AddSpacer(1)
+        sizer3.Add(self._checkbox_show_all, 1, wx.EXPAND)
         sizer3.AddSpacer(1)
         sizer3.Add(sizer2, 30, wx.EXPAND)
         sizer3.AddSpacer(1)
-        sizer3.Add(sizer4, 1, wx.EXPAND)
+        sizer3.Add(self._scan_clipboard, 1, wx.EXPAND)
+
         self.SetSizer(sizer3)
 
     @property
@@ -83,13 +90,22 @@ class TranslationPage(wx.Panel):
 
     @translations.setter
     def translations(self, translations):
-        theme = "%s/themes/translation.html" % os.getcwd()
-        with open(theme, 'r') as template:
-            for translation in translations:
-                if translation is not None:
-                    self._browser.SetPage(template.read() % translation, "text/html")
-                    return None
 
+        collection = []
+        for translation in translations:
+            if translation is not None:
+                collection.append(translation)
+                if self._show_all is False:
+                    break
+
+        with open("%s/themes/translation.html" % os.getcwd(), 'r') as stream:
+            content = stream.read() % string.join(collection, '')
+            self._browser.SetPage(unicode(content, 'utf-8'), "text/html")
+
+    def on_show_all(self, event):
+        checkbox = event.GetEventObject()
+        self._show_all = checkbox.GetValue()
+        print(self._show_all)
 
     def on_scan_checked(self, event):
         if self._callback_on_scan is not None:

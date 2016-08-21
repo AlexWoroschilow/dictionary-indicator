@@ -13,6 +13,9 @@ import wx
 import wx.html2
 import wx.lib.mixins.listctrl as listmix
 from dateutil.parser import parse
+import wx.lib.buttons as buttons
+import string
+from pandas import DataFrame
 
 
 class EditableListCtrl(wx.ListCtrl, listmix.TextEditMixin):
@@ -26,21 +29,45 @@ class HistoryPage(wx.Panel):
         wx.Panel.__init__(self, parent)
 
         self._history = EditableListCtrl(self, style=wx.LC_REPORT)
-        self._history.InsertColumn(0, 'Date')
-        self._history.SetColumnWidth(0, 200)
-        self._history.InsertColumn(1, 'Word')
-        self._history.SetColumnWidth(1, 200)
-        self.Bind(wx.EVT_LIST_KEY_DOWN, self.on_key_pressed, self._history)
+        self._history.InsertColumn(0, 'Date', width=200)
+        self._history.InsertColumn(1, 'Word', width=150)
+        self._history.InsertColumn(2, 'Translation', width=200)
 
-        self._label = wx.StaticText(self, -1, label='loading...')
+        self.Bind(wx.EVT_LIST_KEY_DOWN, self.on_key_pressed, self._history)
 
         sizer3 = wx.BoxSizer(wx.VERTICAL)
         sizer3.Add(self._history, 40, wx.EXPAND)
-        sizer3.AddSpacer(1)
-        sizer3.Add(self._label, 1, wx.EXPAND)
-
+        sizer3.Add(self._button_panel, 1, wx.EXPAND)
 
         self.SetSizer(sizer3)
+
+    @property
+    def _button_panel(self):
+        sizer = wx.BoxSizer(wx.HORIZONTAL)
+
+        self._export_excel = buttons.GenButton(self, wx.ID_ANY, "Export as Excel", style=wx.BORDER_NONE)
+        self._export_excel.Bind(wx.EVT_BUTTON, self.on_export_excel)
+        sizer.Add(self._export_excel, 1, wx.EXPAND)
+
+        sizer.AddSpacer(1)
+
+        self._export_csv = buttons.GenButton(self, wx.ID_ANY, "Export as CSV", style=wx.BORDER_NONE)
+        self._export_csv.Bind(wx.EVT_BUTTON, self.on_export_csv)
+        sizer.Add(self._export_csv, 1, wx.EXPAND)
+
+        sizer.AddSpacer(1)
+
+        self._export_text = buttons.GenButton(self, wx.ID_ANY, "Export as Text", style=wx.BORDER_NONE)
+        self._export_text.Bind(wx.EVT_BUTTON, self.on_export_text)
+        sizer.Add(self._export_text, 1, wx.EXPAND)
+
+        sizer.AddSpacer(1)
+
+        self._clean = buttons.GenButton(self, wx.ID_ANY, "Clean history", style=wx.BORDER_NONE)
+        self._clean.Bind(wx.EVT_BUTTON, self.on_history_clean)
+        sizer.Add(self._clean, 1, wx.EXPAND)
+
+        return sizer
 
     @property
     def history(self):
@@ -49,9 +76,10 @@ class HistoryPage(wx.Panel):
             item = self._history.GetNextItem(item, wx.LIST_NEXT_BELOW, wx.LIST_STATE_DONTCARE)
             date = self._history.GetItemText(item, 0)
             word = self._history.GetItemText(item, 1)
+            trans = self._history.GetItemText(item, 2)
             if len(date) and len(word):
                 datetime = parse(date.encode('utf-8'), fuzzy=True)
-                yield [datetime.strftime("%Y.%m.%d %H:%M:%S"), word.encode('utf-8')]
+                yield [datetime.strftime("%Y.%m.%d %H:%M:%S"), word.encode('utf-8'), trans.encode('utf-8')]
             if item == -1:
                 break
 
@@ -60,17 +88,60 @@ class HistoryPage(wx.Panel):
         self._history.DeleteAllItems()
         for index, line in enumerate(value):
             self._history.InsertStringItem(index, 'line', 1)
+
             self._history.SetStringItem(index, 0, line[0])
             self._history.SetStringItem(index, 1, line[1])
+            if len(line) < 3:
+                continue
 
-        message = "%s records found" % self._history.GetItemCount()
-        self._label.SetLabelText(message)
+            self._history.SetStringItem(index, 2, line[2])
+
+    def on_export_excel(self, event):
+        dialog = wx.FileDialog(self, "Save As", "", "", "", wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT)
+        if dialog.ShowModal() == wx.ID_OK:
+
+            column0 = []
+            column1 = []
+            column2 = []
+            for fields in self.history:
+                column0.append(fields[0])
+                column1.append(fields[1])
+                column2.append(fields[2])
+
+            frame = DataFrame({
+                'Date': column0,
+                'Words': column1,
+                'Translations': column2
+            })
+
+            frame.to_excel(dialog.GetPath(), sheet_name='sheet1', index=False)
+
+        dialog.Destroy()
+
+    def on_export_csv(self, event):
+        dialog = wx.FileDialog(self, "Save As", "", "", "", wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT)
+        if dialog.ShowModal() == wx.ID_OK:
+            with open(dialog.GetPath(), 'w+') as stream:
+                for fields in self.history:
+                    stream.write("%s\n" % string.join(fields, ';'))
+                stream.close()
+        dialog.Destroy()
+
+    def on_export_text(self, event):
+        dialog = wx.FileDialog(self, "Save As", "", "", "", wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT)
+        if dialog.ShowModal() == wx.ID_OK:
+            with open(dialog.GetPath(), 'w+') as stream:
+                for fields in self.history:
+                    stream.write("%s\n" % string.join(fields, "\t"))
+                stream.close()
+        dialog.Destroy()
+
+    def on_history_clean(self, event):
+        self._history.DeleteAllItems()
 
     def on_key_pressed(self, event):
         if event.GetKeyCode() in [wx.WXK_DELETE]:
             self.on_delete_pressed(event)
-            message = "%s records found" % self._history.GetItemCount()
-            self._label.SetLabelText(message)
             return None
 
         if event.GetKeyCode() in [wx.WXK_RETURN]:
