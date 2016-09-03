@@ -10,7 +10,7 @@
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-from modules.history.widget.notebook import *
+from modules.history.widget.notebook import HistoryPage
 
 
 class KernelEventSubscriber(object):
@@ -30,7 +30,7 @@ class KernelEventSubscriber(object):
 
     # Append custom page to common notebook
     def on_notebook(self, event, dispatcher):
-        event.data.AddPage(HistoryPage(event.data), "History")
+        event.data.AddPage(HistoryPage(event.data), "Translation history")
 
     # Perform some actions if notebook
     # have been changed somehow

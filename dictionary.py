@@ -30,8 +30,8 @@ if __name__ == "__main__":
 
     (options, args) = parser.parse_args()
 
-    format = '[%(relativeCreated)d][%(name)s] %(levelname)s - %(message)s'
-    logging.basicConfig(level=logging.DEBUG, format=format)
+    log_format = '[%(relativeCreated)d][%(name)s] %(levelname)s - %(message)s'
+    logging.basicConfig(level=logging.DEBUG, format=log_format)
 
     application = app.WxWindowKernel(options, args)
     application.MainLoop()

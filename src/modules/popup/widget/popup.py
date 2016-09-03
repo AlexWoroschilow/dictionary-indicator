@@ -11,7 +11,6 @@
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 import wx
-import wx.html2
 import wx.lib.scrolledpanel as scrolled
 
 

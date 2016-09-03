@@ -29,8 +29,13 @@ class StatisticPage(wx.Panel):
         self.axes = self.figure.add_subplot(111)
         self.canvas = FigureCanvas(self, -1, self.figure)
 
+        self._label = wx.StaticText(self, -1, label='loading...')
+
         sizer1 = wx.BoxSizer(wx.VERTICAL)
-        sizer1.Add(self.canvas, 1, wx.EXPAND, 1)
+        sizer1.Add(self.canvas, 40, wx.EXPAND, 1)
+        sizer1.AddSpacer(1)
+        sizer1.Add(self._label, 1, wx.EXPAND)
+
         self.SetSizer(sizer1)
 
     @property
@@ -41,10 +46,12 @@ class StatisticPage(wx.Panel):
     def history(self, history):
         collection = {}
         for fields in history:
-            if len(fields) > 2:
-                continue
 
-            datetime, word = fields
+            if len(fields) == 3:
+                datetime, word, translation = fields
+            else:
+                datetime, word = fields
+                
             date = parse(datetime, fuzzy=True).date()
             date_string = date.strftime("%d %b %y")
 
@@ -56,15 +63,21 @@ class StatisticPage(wx.Panel):
 
         labels = collection.keys()
         labels.reverse()
+
         values = collection.values()
         values.reverse()
 
         positions = [i for i in range(0, len(labels))]
 
         self.axes.clear()
-        self.axes.bar(positions, values, align='center')
+        if len(labels) > 1 and len(values) > 1:
+            self.axes.plot(positions, values, linewidth=3.0)
+
         self.axes.set_xticks(positions)
         self.axes.set_xticklabels(labels, rotation=23, fontdict={'size': 9})
         self.axes.set_ylabel('Amount of words')
+
+        message = "%s days history statistic" % len(labels)
+        self._label.SetLabelText(message)
 
         self.canvas.draw()

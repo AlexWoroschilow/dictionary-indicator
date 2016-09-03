@@ -10,7 +10,7 @@
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-from modules.statistic.widget.notebook import *
+from modules.statistic.widget.notebook import StatisticPage
 
 
 class KernelEventSubscriber(object):
@@ -34,7 +34,7 @@ class KernelEventSubscriber(object):
         statistic = StatisticPage(event.data)
         statistic.history = service_history.history
 
-        event.data.AddPage(statistic, "Statistic")
+        event.data.AddPage(statistic, "Translation statistic")
 
     # Perform some actions if notebook
     # have been changed somehow

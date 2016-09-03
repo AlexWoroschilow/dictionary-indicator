@@ -1,6 +1,6 @@
 services:
   history:
-    class: utl.history.DictionaryHistory
+    class: modules.history.service.history.CSVFileHistory
     arguments:
       - "./history.csv"
   history.subscriber_gui:

@@ -28,12 +28,15 @@ class Clipboard(object):
     _event = None
     _thread = None
     _application = None
-    _logger = None
-
+    _callback = None
+    
+    __current = None
+    __previous = None
+    
     def __init__(self, application, callback):
+        self._callback = callback
         self._application = application
-        self._application.Connect(-1, -1, 100, callback)
-        self._logger = logging.getLogger('clipboard')
+        self._application.Connect(-1, -1, 100, self._scan)
 
     def start_scan(self, callback):
         while wx.TheClipboard.IsOpened():
@@ -47,36 +50,39 @@ class Clipboard(object):
         self._thread.start()
 
     def scan(self, callback, event):
-        previous = None
         while not event.is_set():
-            data = wx.TextDataObject()
-
-            wx.TheClipboard.Open()
-            success = wx.TheClipboard.GetData(data)
-            wx.TheClipboard.Close()
-
-            if not success:
-                continue
-
-            current = data.GetText()
-            if current is None or not len(current):
-                event.wait(self._timeout)
-                continue
-
-            if current == previous:
-                event.wait(self._timeout)
-                continue
-
-            clipboard_event = ClipboardEvent(current)
-            wx.PostEvent(self._application, clipboard_event)
-            self._logger.debug("word: %s" % current)
-
-            previous = current
+            wx.PostEvent(self._application, ClipboardEvent(None))
             event.wait(self._timeout)
 
     def stop_scan(self):
         if self._event is not None:
             self._event.set()
-
         if self._thread is not None:
             self._thread.join()
+
+    def _scan(self, event):
+        '''
+        Scan clipboard for changes
+        
+        '''
+        data = wx.TextDataObject()
+        if not data:
+            return None
+
+        wx.TheClipboard.Open()
+        success = wx.TheClipboard.GetData(data)
+        wx.TheClipboard.Close()
+        if not success:
+            return None
+
+        self.__current = data.GetText()
+        if self.__current is None or not len(self.__current):
+            return None
+
+        if self.__current == self.__previous:
+            return None
+
+        self._callback(self.__current)
+
+        self.__previous = self.__current
+            

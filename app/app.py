@@ -89,12 +89,12 @@ class WxWindowKernel(WxGuiKernel):
         dispatcher.dispatch('kernel_event.start', dispatcher.new_event([]))
 
         window = wx.Frame(None)
-        window.SetSize((600, 600))
-        window.SetMinSize((600, 600))
+        window.SetSize((620, 600))
+        window.SetMinSize((620, 600))
         window.Bind(wx.EVT_CLOSE, self.Destroy)
 
         panel = wx.Panel(window)
-        self._notebook = wx.Notebook(panel)
+        self._notebook = wx.Notebook(panel, wx.ID_ANY)
         self.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.on_page_changed, self._notebook)
 
         dispatcher.dispatch('kernel_event.window_tab', dispatcher.new_event(self._notebook))
@@ -115,6 +115,9 @@ class WxWindowKernel(WxGuiKernel):
         self.ExitMainLoop()
 
     def on_page_changed(self, event):
+        if event.GetOldSelection() is -1:
+            return None
+        
         previous = self._notebook.GetPage(event.GetOldSelection())
         current = self._notebook.GetPage(event.GetSelection())
 

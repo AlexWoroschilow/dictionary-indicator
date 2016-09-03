@@ -10,14 +10,20 @@
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 import wx
-import wx.html2
+import  wx.lib.mixins.listctrl  as  listmix
 
+class ListCtrlAutoWidth(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin):
+    def __init__(self, parent, pos=wx.DefaultPosition, size=wx.DefaultSize, style=0):
+        wx.ListCtrl.__init__(self, parent, wx.ID_ANY, pos, size, style)
+        listmix.ListCtrlAutoWidthMixin.__init__(self)
 
 class DictionaryPage(wx.Panel):
     def __init__(self, parent):
         wx.Panel.__init__(self, parent)
 
-        self._history = wx.ListCtrl(self, style=wx.LC_LIST | wx.LC_HRULES)
+        style = wx.LC_REPORT | wx.BORDER_NONE | wx.LC_EDIT_LABELS | wx.LC_SORT_ASCENDING
+        self._history = ListCtrlAutoWidth(self, style=style)
+        
         self._history.InsertColumn(0, 'Dictionary')
         self._history.SetColumnWidth(0, 300)
 
@@ -32,8 +38,8 @@ class DictionaryPage(wx.Panel):
 
     @property
     def dictionaries(self):
-        pass
 
+        pass
     @dictionaries.setter
     def dictionaries(self, collection):
         for index, dictionary in enumerate(collection):

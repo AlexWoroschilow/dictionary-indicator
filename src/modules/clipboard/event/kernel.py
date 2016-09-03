@@ -10,7 +10,7 @@
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-from modules.clipboard.widget.clipboard import *
+from modules.clipboard.widget.clipboard import Clipboard
 
 
 class KernelEventSubscriber(object):
@@ -27,37 +27,56 @@ class KernelEventSubscriber(object):
 
     @property
     def subscribed_events(self):
+        '''
+        Get a list with all subscribed 
+        events and theirs callbacks
+
+        '''
+
         yield ('kernel_event.stop', ['on_stop', 0])
-        yield ('kernel_event.toggle_scanning', ['on_toggle_scanning', 0])
+        yield ('kernel_event.window_toggle_scanning', ['on_toggle_scanning', 0])
         yield ('kernel_event.window_tab', ['on_notebook', 10])
 
     def on_notebook(self, event, dispatcher):
-        if event.data is None:
-            return None
+        '''
+        Application is ready here
+        to accept notebok pages from modules
+        all servicea are initialized
 
-        self._application = event.data
-        self._clipboard = Clipboard(self._application, self.on_clipboard)
+        '''
+ 
+        self._clipboard = Clipboard(event.data, self.on_text)
 
     def on_toggle_scanning(self, event, dispatcher):
-        if self._clipboard is None:
-            return None
+        '''
+        Enable or disable clipboard scanning
+
+        '''
 
         if event.data is not None and event.data:
-            self._clipboard.start_scan(self.on_clipboard)
-            return None
+            return self._clipboard.start_scan(self.on_text)
+        return self._clipboard.stop_scan()
 
-        self._clipboard.stop_scan()
-        return None
+    def on_text(self, text):
+        '''
+        Get text from clipboard and fire
+        an event to show an popup and son on
 
-    def on_clipboard(self, event):
-        if event.data is None or not len(event.data):
-            return None
+        '''
 
         dispatcher = self.container.get('ioc.extra.event_dispatcher')
-        dispatcher.dispatch('clipboard_event.changed', dispatcher.new_event(event.data))
+
+        if text is None or not len(text):
+            return None
+ 
+
+        event = dispatcher.new_event(text.strip())
+        dispatcher.dispatch('clipboard_event.changed', event)
 
     def on_stop(self, event, dispatcher):
-        if self._clipboard is None:
-            return None
+        '''
+        Disable clipboard scanning
+
+        '''
 
         self._clipboard.stop_scan()

@@ -49,12 +49,17 @@ class KernelEventSubscriber(object):
         if self._page is None:
             return None
 
-        suggestions = dictionary.suggestions(word)
-        translations = dictionary.translate(word)
-        if not len(word) or translations is None:
+        if len(word) and len(word) >= 3:
+            suggestions = dictionary.suggestions(word)
+            self._page.suggestions = suggestions
+
+        if not len(word):
             return None
 
-        self._page.suggestions = suggestions
+        translations = dictionary.translate(word)
+        if translations is None:
+            return None
+
         self._page.translations = translations
 
         event = event_dispatcher.new_event([word, translations])
@@ -82,7 +87,7 @@ class KernelEventSubscriber(object):
     def on_toggle_scaning(self, scan=False):
         event_dispatcher = self._container.get('ioc.extra.event_dispatcher')
         event = event_dispatcher.new_event(scan)
-        event_dispatcher.dispatch('kernel_event.toggle_scanning', event)
+        event_dispatcher.dispatch('kernel_event.window_toggle_scanning', event)
 
 
     # Catch clipboard event (clipboard text has been changed)
