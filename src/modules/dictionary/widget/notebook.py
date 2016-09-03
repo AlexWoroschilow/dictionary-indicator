@@ -38,8 +38,8 @@ class DictionaryPage(wx.Panel):
 
     @property
     def dictionaries(self):
-
         pass
+
     @dictionaries.setter
     def dictionaries(self, collection):
         for index, dictionary in enumerate(collection):

@@ -63,6 +63,7 @@ class KernelEventSubscriber(object):
         an event to show an popup and son on
 
         '''
+        dispatcher = self._container.get('ioc.extra.event_dispatcher')
         if text is None or not len(text):
             return None
 

@@ -17,3 +17,4 @@ from modules.popup.module import Loader as PopupLoader
 from modules.history.module import Loader as HistoryLoader
 from modules.statistic.module import Loader as StatisticLoader
 from modules.terminal.module import Loader as TerminalLoader
+from modules.indicator.module import Loader as IndicatorLoader

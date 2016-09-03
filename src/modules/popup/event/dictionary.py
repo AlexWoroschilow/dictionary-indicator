@@ -10,18 +10,34 @@
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-from modules.popup.widget.popup import *
+import os
+import gi
+import string
+
+gi.require_version('Gtk', '3.0')
+from gi.repository import Gtk
+
+from modules.popup.widget.popup import TranslationPopup
 
 
 class PopupEventSubscriber(object):
+    _all = False
     _container = None
     _dictionary = None
     _window = None
 
     def __init__(self, container=None):
+        '''
+        Class constructor create instance 
+        of our popup window here and hide 
+        this window a this time, show it
+        only if some translations found
+        
+        '''
 
         self._window = TranslationPopup()
-        self._window.Hide()
+        self._window.connect("delete-event", Gtk.main_quit)
+        self._window.hide()
 
     @property
     def container(self):
@@ -32,30 +48,67 @@ class PopupEventSubscriber(object):
 
     @property
     def subscribed_events(self):
-        yield ('clipboard_event.changed', ['on_clipboard', 128])
+        '''
+        Get a list with all subscribed 
+        events and theirs callbacks
 
-    # Catch clipboard event (clipboard text has been changed)
-    # and display popup with a translation, if it has been found
+        '''
+        yield ('kernel_event.window_clipboard', ['on_clipboard', 10])
+        yield ('kernel_event.window_translate_all', ['on_translate_all', 10])
+
+    def on_translate_all(self, event, dispatcher):
+        '''
+        Enable or disable all 
+        translations in popup window
+
+        '''
+
+        self._all = event.data
+
     def on_clipboard(self, event, dispatcher):
+        '''
+        Catch clipboard event (clipboard text has been changed)
+        and display popup with a translation, 
+        if it has been found
 
-        clipboard = self._text_clean(event.data)
-        if clipboard is None or not len(clipboard):
+        '''
+        dictionary = self._container.get('dictionary')
+        word = self._text_clean(event.data)
+        if not word:
             return None
 
-        self._dictionary = self.container.get('dictionary')
-        translation = self._dictionary.translate_one(clipboard)
-        if translation is None:
-            return None
+        if self._all:
+            translations = dictionary.translate(word)
+            if translations is not None:
+                return self._popup(word, translations)
+            
+        translation = dictionary.translate_one(word)
+        if translation is not None:
+            return self._popup(word, [translation])
 
-        self._window.Hide()
-        self._window.SetPosition(wx.GetMousePosition())
-        self._window.translations = translation
-        self._window.Show()
+    def _popup(self, word, translations):
+        '''
+        Show popup with given content 
 
-    # Remove special characters, empty spaces
-    # and check for maximal word Limit to translate Tree
+        '''
+        dispatcher = self._container.get('ioc.extra.event_dispatcher')
+
+        event = dispatcher.new_event([word, translations])
+        dispatcher.dispatch('dictionary.translation', event)
+        
+        with open("%s/themes/popup.html" % os.getcwd(), 'r') as stream:
+            self._window.content = stream.read() % string.join(translations, '')
+        self._window.show_all()
+        
     @staticmethod
     def _text_clean(text):
+        '''
+        Remove special characters, empty spaces
+        and check for maximal word 
+        Limit to translate Tree
+
+        '''
         if len(text) > 32:
             return None
+        
         return ''.join(e for e in text if e.isalnum())

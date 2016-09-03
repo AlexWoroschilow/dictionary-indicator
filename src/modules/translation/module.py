@@ -27,7 +27,7 @@ class Loader(object):
 
     @property
     def enabled(self):
-        return True
+        return not self._options.tray
 
     def on_loaded(self, container):
         pass

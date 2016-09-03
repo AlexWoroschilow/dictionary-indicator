@@ -11,81 +11,22 @@
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 import os
-import ioc
-import glob
 import wx
-import imp
-import logging
-from modules import *
-import modules as Modules
-import inspect
+from kernel import Kernel
 
 
-class WxGuiKernel(wx.App):
-    _logger = None
-    _container = None
+class WxApplication(wx.App):
+    
+    _kernel = None
+    _notebook = None
 
     def __init__(self, options=None, args=None):
         wx.App.__init__(self)
+        self._kernel = Kernel(options, args)
 
-        self._logger = logging.getLogger('app')
-
-        collection = []
-        for source in glob.glob("app/config/*.yml"):
-            if os.path.exists(source):
-                self._logger.debug("config: %s" % source)
-                collection.append(source)
-
-        collection_modules = []
-        for (name, module) in inspect.getmembers(Modules, inspect.ismodule):
-            location = os.path.dirname(inspect.getfile(module))
-            if hasattr(module, 'Loader'):
-                self._logger.debug("module: %s" % name)
-                identifier = getattr(module, 'Loader')
-                with identifier(options) as plugin:
-                    self._logger.debug("enabled: %s" % plugin.enabled)
-                    if plugin.enabled is not None and plugin.enabled:
-                        collection_modules.append(plugin)
-                        if plugin.config is not None:
-                            self._logger.debug("config: %s" % plugin.config)
-                            collection.append("%s/%s" % (location, plugin.config))
-
-        container = ioc.build(collection)
-        for module in collection_modules:
-            self._logger.debug("loaded: %s" % module)
-            module.on_loaded(container)
-
-        event_dispatcher = container.get('ioc.extra.event_dispatcher')
-        event_dispatcher.dispatch('kernel_event.load', event_dispatcher.new_event())
-
-        self._container = container
-
-    @staticmethod
-    def __module_loader(source):
-        return imp.load_source('Loader', source)
-
-    # Get service from service container
-    # this is just a short notation
-    # from a classic event container method
-    def get(self, name):
-        if self._container.has(name):
-            return self._container.get(name)
-        return None
-
-    def MainLoop(self):
-        dispatcher = self.get('ioc.extra.event_dispatcher')
-
-        event = dispatcher.new_event()
-        dispatcher.dispatch('kernel_event.start', event)
-
-        return wx.App.MainLoop(self)
-
-
-class WxWindowKernel(WxGuiKernel):
-    _notebook = None
-
-    def MainLoop(self):
-        dispatcher = self.get('ioc.extra.event_dispatcher')
+    def MainLoop(self, options=None, args=None):
+        
+        dispatcher = self._kernel.get('ioc.extra.event_dispatcher')
         dispatcher.dispatch('kernel_event.start', dispatcher.new_event([]))
 
         window = wx.Frame(None)
@@ -95,9 +36,10 @@ class WxWindowKernel(WxGuiKernel):
 
         panel = wx.Panel(window)
         self._notebook = wx.Notebook(panel, wx.ID_ANY)
-        self.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.on_page_changed, self._notebook)
+        self.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.OnPageChanged, self._notebook)
 
-        dispatcher.dispatch('kernel_event.window_tab', dispatcher.new_event(self._notebook))
+        event = dispatcher.new_event(self._notebook)
+        dispatcher.dispatch('kernel_event.window_tab', event)
 
         sizer = wx.BoxSizer()
         panel.SetSizer(sizer)
@@ -108,18 +50,19 @@ class WxWindowKernel(WxGuiKernel):
 
         return wx.App.MainLoop(self)
 
-    def Destroy(self, event=None):
-        dispatcher = self.get('ioc.extra.event_dispatcher')
-        dispatcher.dispatch('kernel_event.stop', dispatcher.new_event())
-
-        self.ExitMainLoop()
-
-    def on_page_changed(self, event):
+    def OnPageChanged(self, event):
+        dispatcher = self._kernel.get('ioc.extra.event_dispatcher')
         if event.GetOldSelection() is -1:
             return None
         
-        previous = self._notebook.GetPage(event.GetOldSelection())
         current = self._notebook.GetPage(event.GetSelection())
+        previous = self._notebook.GetPage(event.GetOldSelection())
 
-        dispatcher = self.get('ioc.extra.event_dispatcher')
-        dispatcher.dispatch('kernel_event.notebook_changed', dispatcher.new_event((previous, current)))
+        event = dispatcher.new_event((previous, current))
+        dispatcher.dispatch('kernel_event.notebook_changed', event)
+
+    def Destroy(self, event=None):
+        dispatcher = self._kernel.get('ioc.extra.event_dispatcher')
+        dispatcher.dispatch('kernel_event.stop', dispatcher.new_event())
+
+        self.ExitMainLoop()

@@ -10,7 +10,7 @@
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-from modules.translation.widget.notebook import *
+from modules.translation.widget.notebook import TranslationPage
 import logging
 
 

@@ -22,12 +22,11 @@ sys.path.append('src')
 import optparse
 import logging
 
-from app import WxApplication
+from tray import IndicatorGtk
 
 if __name__ == "__main__":
     parser = optparse.OptionParser()
-    parser.add_option("-t", "--tray", action="store_true", default=False, dest="tray", help="enable grafic user interface")
-    parser.add_option("-g", "--gui", action="store_true", default=True, dest="gui", help="enable grafic user interface")
+    parser.add_option("-t", "--tray", action="store_true", default=True, dest="tray", help="enable grafic user interface")
     parser.add_option("-w", "--word", default="baum", dest="word", help="word to translate")
 
     (options, args) = parser.parse_args()
@@ -35,6 +34,5 @@ if __name__ == "__main__":
     log_format = '[%(relativeCreated)d][%(name)s] %(levelname)s - %(message)s'
     logging.basicConfig(level=logging.DEBUG, format=log_format)
 
-    application = WxApplication(options, args)
-    application.MainLoop()
+    IndicatorGtk(options, args)
 

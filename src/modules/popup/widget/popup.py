@@ -10,73 +10,53 @@
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-import wx
-import wx.lib.scrolledpanel as scrolled
+import gi
+
+gi.require_version('Gtk', '3.0')
+from gi.repository import Gtk
+
+gi.require_version('Gdk', '3.0')
+from gi.repository import Gdk
+
+gi.require_version('WebKit', '3.0')
+from gi.repository import WebKit
 
 
-class TranslationPopup(wx.PopupWindow):
-    _transformation = {
-        '<k>': '<span foreground="#006400" size="x-large">',
-        '</k>': '</span>',
-        '<kref>': '<span foreground="grey">',
-        '</kref>': '</span>',
-        '<dtrn>': '<small>',
-        '</dtrn>': '</small>',
-        '<co>': '<i>',
-        '</co>': '</i>',
-        '<abr>': '<span foreground="blue">',
-        '</abr>': '</span>',
-        '<ex>': '<span foreground="#a0a0a0">',
-        '</ex>': '</span>',
-        '<tr>': '<i>',
-        '</tr>': '</i>',
-        '<c>': '<i>',
-        '</c>': '</i>',
-    }
-
+class TranslationPopup(Gtk.Window):
     def __init__(self):
-        wx.PopupWindow.__init__(self, None, wx.STAY_ON_TOP | wx.FRAME_SHAPED)
-        self.SetBackgroundColour("#f0f0f0")
-        self.SetTransparent(240)
-        self.SetSize(wx.Size(280, 300))
-
-        self.Bind(wx.EVT_CHAR_HOOK, self.OnKeyUP)
-        self.Bind(wx.EVT_LEAVE_WINDOW, self.OnKeyUP)
-        self.Bind(wx.EVT_LEFT_DOWN, self.OnKeyUP)
-
-        self._panel = scrolled.ScrolledPanel(self, -1, style=wx.VSCROLL)
-        self._panel.SetAutoLayout(1)
-        self._panel.SetupScrolling()
-        self._panel.SetSize(wx.Size(280, 300))
-
-        self._panel.Bind(wx.EVT_CHAR_HOOK, self.OnKeyUP)
-        self._panel.Bind(wx.EVT_LEAVE_WINDOW, self.OnKeyUP)
-        self._panel.Bind(wx.EVT_LEFT_DOWN, self.OnKeyUP)
-
-        self._browser = wx.StaticText(self._panel, style=wx.TE_WORDWRAP)
-        self._browser.SetMinSize(wx.Size(260, 1500))
-        self._browser.Wrap(240)
-
-        sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(self._browser, 1, wx.EXPAND, border=30)
-        self._panel.SetSizer(sizer)
-
-        sizer_panel = wx.BoxSizer(wx.HORIZONTAL)
-        sizer_panel.Add(self._panel)
+        Gtk.Window.__init__(self, Gtk.WindowType.POPUP)
+        self.set_position(Gtk.WindowPosition.MOUSE)
+        self.connect("event", self.on_popup_hide)
+        self.set_default_size(400, 400)
+        self.set_keep_above(True)
+        self.add(self.scrolled_area)
 
     @property
-    def translations(self):
+    def content(self):
         pass
 
-    @translations.setter
-    def translations(self, text):
-        if not len(text):
-            return None
+    @content.setter
+    def content(self, value):
+        self._web_view.load_html_string(value, 'text/html')
 
-        for replace, to in self._transformation.iteritems():
-            text = text.replace(replace, to)
-        self._browser.SetLabelMarkup(text)
-        self._panel.Scroll(0, 0)
+    @property
+    def scrolled_area(self):
+        scrolled_window = Gtk.ScrolledWindow()
+        scrolled_window.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.NEVER)
+        scrolled_window.add(self.web_view)
+        return scrolled_window
 
-    def OnKeyUP(self, event):
-        self.Hide()
+    @property
+    def web_view(self):
+        self._web_view = WebKit.WebView()
+        self._web_view.can_go_back()
+        return self._web_view
+
+    def on_popup_hide(self, popup, event):
+        if event.type in [
+            Gdk.EventType.FOCUS_CHANGE,
+            Gdk.EventType.LEAVE_NOTIFY,
+            Gdk.EventType.BUTTON_RELEASE,
+        ]:
+            self.hide()
+        return True
