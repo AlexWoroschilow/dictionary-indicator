@@ -63,12 +63,8 @@ class KernelEventSubscriber(object):
         an event to show an popup and son on
 
         '''
-
-        dispatcher = self.container.get('ioc.extra.event_dispatcher')
-
         if text is None or not len(text):
             return None
- 
 
         event = dispatcher.new_event(text.strip())
         dispatcher.dispatch('clipboard_event.changed', event)

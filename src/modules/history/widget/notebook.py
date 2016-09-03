@@ -25,7 +25,6 @@ class EditableListCtrl(wx.ListCtrl, listmix.TextEditMixin):
         listmix.TextEditMixin.__init__(self)
 
 
-
 class HistoryPage(wx.Panel):
     def __init__(self, parent):
         wx.Panel.__init__(self, parent, style=wx.TEXT_ALIGNMENT_LEFT)
@@ -35,7 +34,6 @@ class HistoryPage(wx.Panel):
         self._history.InsertColumn(0, 'Date', width=200)
         self._history.InsertColumn(1, 'Word', width=150)
         self._history.InsertColumn(2, 'Translation', width=200)
-
 
         self.Bind(wx.EVT_LIST_KEY_DOWN, self.on_key_pressed, self._history)
 
