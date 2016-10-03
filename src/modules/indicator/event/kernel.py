@@ -37,6 +37,7 @@ class KernelEventSubscriber(object):
 
         '''
         yield ('kernel_event.indicator_menu', ['on_indicator_menu', 10])
+        yield ('kernel_event.indicator_menu', ['on_indicator_clipboard', 10])
 
     def on_indicator_menu(self, event, dispatcher):
         '''
@@ -54,20 +55,27 @@ class KernelEventSubscriber(object):
         for dictionary in service_translator.dictionaries:
             event.data.append(self._menu_item(dictionary.name))
 
+    def on_indicator_clipboard(self, event, dispatcher):
         self._clipboard = Gtk.Clipboard.get(Gdk.SELECTION_PRIMARY)
         self._clipboard.connect("owner-change", self.on_clipboard_change)
 
+
     def on_clipboard_change(self, clipboard, event):
+        client = self._container.get('dbus.dictionary.client')
         dispatcher = self._container.get('ioc.extra.event_dispatcher')
+
         if not self._scan:
             return None
 
         text = clipboard.wait_for_text()
+        text = text.decode('utf-8')
         if text is None or not len(text):
             return None
 
         event = dispatcher.new_event(text.strip())
         dispatcher.dispatch('kernel_event.window_clipboard', event)
+
+        client.translate(text)
         
     def on_clipboard_scan(self, item=None):
         '''

@@ -29,6 +29,9 @@ class KernelEventSubscriber(object):
     def subscribed_events(self):
         yield ('kernel_event.window_tab', ['on_window_tab', 0])
         yield ('clipboard_event.changed', ['on_clipboard_changed', 0])
+        yield ('kernel_event.service_transate', ['on_clipboard_changed', 0])
+
+
 
     def on_window_tab(self, event, dispatcher):
 

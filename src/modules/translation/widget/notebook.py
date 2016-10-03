@@ -35,28 +35,27 @@ class TranslationPage(wx.Panel):
         self._callback_on_search = on_search
         self._callback_on_select = on_select
         wx.Panel.__init__(self, parent)
-
-        self._search = wx.TextCtrl(self, wx.ID_ANY, "")
-        self.Bind(wx.EVT_TEXT, self.on_search_selected, self._search)
-
+        
+        self._search = wx.TextCtrl(self, size=(70, 70), style=wx.TE_PROCESS_ENTER) 
+        self._search.Bind(wx.EVT_TEXT_ENTER, self.on_search_selected)  
+        
         self._scan_clipboard = wx.CheckBox(self, label='Scan and translate clipboard')
-        self.Bind(wx.EVT_CHECKBOX, self.on_scan_checked, self._scan_clipboard)
+        self._scan_clipboard.Bind(wx.EVT_CHECKBOX, self.on_scan_checked)
 
         sizer1 = wx.BoxSizer(wx.HORIZONTAL)
         sizer1.Add(self._search, 1, wx.ALL)
         sizer1.Add(self._scan_clipboard, 1, wx.ALL)
 
         self._checkbox_show_all = wx.CheckBox(self, label='Show results from all available dictionaries')
-        self.Bind(wx.EVT_CHECKBOX, self.on_show_all, self._checkbox_show_all)
+        self._checkbox_show_all.Bind(wx.EVT_CHECKBOX, self.on_show_all)
 
         self._browser = webview.WebView.New(self)
 
-        style = wx.LC_REPORT | wx.BORDER_NONE 
-        self._suggestions = ListCtrlAutoWidth(self, style=style)
+        self._suggestions = ListCtrlAutoWidth(self, style=wx.LC_REPORT | wx.BORDER_NONE)
         self._suggestions.InsertColumn(0, 'Similar words', width=150)
 
-        self.Bind(wx.EVT_LIST_ITEM_SELECTED, self.on_suggestion_selected, self._suggestions)
-        self.Bind(wx.EVT_LIST_ITEM_ACTIVATED, self.on_suggestion_selected, self._suggestions)
+        self._suggestions.Bind(wx.EVT_LIST_ITEM_SELECTED, self.on_suggestion_selected)
+        self._suggestions.Bind(wx.EVT_LIST_ITEM_ACTIVATED, self.on_suggestion_selected)
 
         sizer2 = wx.BoxSizer(wx.HORIZONTAL)
         sizer2.Add(self._suggestions, 1, wx.EXPAND)
