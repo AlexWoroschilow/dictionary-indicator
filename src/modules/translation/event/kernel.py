@@ -31,8 +31,6 @@ class KernelEventSubscriber(object):
         yield ('clipboard_event.changed', ['on_clipboard_changed', 0])
         yield ('kernel_event.service_transate', ['on_clipboard_changed', 0])
 
-
-
     def on_window_tab(self, event, dispatcher):
 
         self._page = TranslationPage(event.data, self.on_search, self.on_suggestion, self.on_toggle_scaning)
@@ -42,13 +40,18 @@ class KernelEventSubscriber(object):
         self._page.translations = dictionary.translate("welcome")
         self._page.suggestions = dictionary.suggestions("welcome")
 
+    # Enable or disable clipboard scanning
+    def on_toggle_scaning(self, scan=False):
+        dispatcher = self._container.get('ioc.extra.event_dispatcher')
+        event = dispatcher.new_event(scan)
+        dispatcher.dispatch('kernel_event.window_toggle_scanning', event)
+
     # Search event, fired if user
     # typped a word in search box and
     # pressed enter, or without enter
     def on_search(self, word=None):
-
         dictionary = self._container.get('dictionary')
-        event_dispatcher = self._container.get('ioc.extra.event_dispatcher')
+        dispatcher = self._container.get('ioc.extra.event_dispatcher')
         if self._page is None:
             return None
 
@@ -65,15 +68,15 @@ class KernelEventSubscriber(object):
 
         self._page.translations = translations
 
-        event = event_dispatcher.new_event([word, translations])
-        event_dispatcher.dispatch('dictionary.translation', event)
+        event = dispatcher.new_event([word, translations])
+        dispatcher.dispatch('dictionary.translation', event)
 
     # Suggestion event, fired of user
     # found a similar word in left side panel
     # and clicked on it
     def on_suggestion(self, word=None):
         dictionary = self._container.get('dictionary')
-        event_dispatcher = self._container.get('ioc.extra.event_dispatcher')
+        dispatcher = self._container.get('ioc.extra.event_dispatcher')
         if self._page is None:
             return None
 
@@ -83,17 +86,12 @@ class KernelEventSubscriber(object):
 
         self._page.translations = translations
 
-        event = event_dispatcher.new_event([word, translations])
-        event_dispatcher.dispatch('dictionary.translation', event)
-
-    # Enable or disable clipboard scanning
-    def on_toggle_scaning(self, scan=False):
-        event_dispatcher = self._container.get('ioc.extra.event_dispatcher')
-        event = event_dispatcher.new_event(scan)
-        event_dispatcher.dispatch('kernel_event.window_toggle_scanning', event)
-
+        event = dispatcher.new_event([word, translations])
+        dispatcher.dispatch('dictionary.translation', event)
 
     # Catch clipboard event (clipboard text has been changed)
     # and display popup with a translation, if it has been found
     def on_clipboard_changed(self, event, dispatcher):
         self._page.word = event.data
+        self.on_search(event.data)
+ 

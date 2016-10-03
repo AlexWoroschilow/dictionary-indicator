@@ -42,33 +42,26 @@ class TranslationPage(wx.Panel):
         self._scan_clipboard = wx.CheckBox(self, label='Scan and translate clipboard')
         self._scan_clipboard.Bind(wx.EVT_CHECKBOX, self.on_scan_checked)
 
-        sizer1 = wx.BoxSizer(wx.HORIZONTAL)
-        sizer1.Add(self._search, 1, wx.ALL)
-        sizer1.Add(self._scan_clipboard, 1, wx.ALL)
-
         self._checkbox_show_all = wx.CheckBox(self, label='Show results from all available dictionaries')
         self._checkbox_show_all.Bind(wx.EVT_CHECKBOX, self.on_show_all)
 
         self._browser = webview.WebView.New(self)
 
         self._suggestions = ListCtrlAutoWidth(self, style=wx.LC_REPORT | wx.BORDER_NONE)
-        self._suggestions.InsertColumn(0, 'Similar words', width=150)
+        self._suggestions.InsertColumn(0, 'Similar words')
 
         self._suggestions.Bind(wx.EVT_LIST_ITEM_SELECTED, self.on_suggestion_selected)
         self._suggestions.Bind(wx.EVT_LIST_ITEM_ACTIVATED, self.on_suggestion_selected)
 
-        sizer2 = wx.BoxSizer(wx.HORIZONTAL)
-        sizer2.Add(self._suggestions, 1, wx.EXPAND)
-        sizer2.Add(self._browser, 2, wx.EXPAND)
+        translations = wx.BoxSizer(wx.HORIZONTAL)
+        translations.Add(self._suggestions, proportion=1, flag=wx.ALL | wx.EXPAND)
+        translations.Add(self._browser, proportion=3, flag=wx.ALL | wx.EXPAND)
 
         sizer3 = wx.BoxSizer(wx.VERTICAL)
-        sizer3.Add(self._search, 1, wx.EXPAND)
-        sizer3.AddSpacer(1)
-        sizer3.Add(self._checkbox_show_all, 1, wx.EXPAND)
-        sizer3.AddSpacer(1)
-        sizer3.Add(sizer2, 30, wx.EXPAND)
-        sizer3.AddSpacer(1)
-        sizer3.Add(self._scan_clipboard, 1, wx.EXPAND)
+        sizer3.Add(self._search, proportion=1, flag=wx.ALL | wx.EXPAND, border=15)
+        sizer3.Add(self._checkbox_show_all, proportion=1, flag=wx.ALL | wx.EXPAND, border=15)
+        sizer3.Add(translations, proportion=20, flag=wx.ALL | wx.EXPAND, border=0)
+        sizer3.Add(self._scan_clipboard, proportion=1, flag=wx.ALL | wx.EXPAND, border=15)
 
         self.SetSizer(sizer3)
 
