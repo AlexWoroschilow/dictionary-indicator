@@ -32,9 +32,8 @@ class StatisticPage(wx.Panel):
         self._label = wx.StaticText(self, -1, label='loading...')
 
         sizer1 = wx.BoxSizer(wx.VERTICAL)
-        sizer1.Add(self.canvas, 40, wx.EXPAND, 1)
-        sizer1.AddSpacer(1)
-        sizer1.Add(self._label, 1, wx.EXPAND)
+        sizer1.Add(self.canvas, proportion=20, flag=wx.ALL | wx.EXPAND)
+        sizer1.Add(self._label, proportion=1, flag=wx.ALL | wx.EXPAND, border=15)
 
         self.SetSizer(sizer1)
 

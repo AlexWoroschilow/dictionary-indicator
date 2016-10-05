@@ -16,6 +16,7 @@ class ListCtrlAutoWidth(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin):
     def __init__(self, parent, pos=wx.DefaultPosition, size=wx.DefaultSize, style=0):
         wx.ListCtrl.__init__(self, parent, wx.ID_ANY, pos, size, style)
         listmix.ListCtrlAutoWidthMixin.__init__(self)
+        self.setResizeColumn(0)
 
 class DictionaryPage(wx.Panel):
     def __init__(self, parent):
@@ -23,16 +24,13 @@ class DictionaryPage(wx.Panel):
 
         style = wx.LC_REPORT | wx.BORDER_NONE | wx.LC_EDIT_LABELS | wx.LC_SORT_ASCENDING
         self._history = ListCtrlAutoWidth(self, style=style)
-        
         self._history.InsertColumn(0, 'Dictionary')
-        self._history.SetColumnWidth(0, 300)
 
         self._label = wx.StaticText(self, -1, label='loading...')
 
         sizer3 = wx.BoxSizer(wx.VERTICAL)
-        sizer3.Add(self._history, 40, wx.EXPAND)
-        sizer3.AddSpacer(1)
-        sizer3.Add(self._label, 1, wx.EXPAND)
+        sizer3.Add(self._history, proportion=20, flag=wx.ALL | wx.EXPAND)
+        sizer3.Add(self._label, proportion=1, flag=wx.ALL | wx.EXPAND, border=15)
 
         self.SetSizer(sizer3)
 

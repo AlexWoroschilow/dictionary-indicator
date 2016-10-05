@@ -22,6 +22,7 @@ class ListCtrlAutoWidth(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin):
     def __init__(self, parent, pos=wx.DefaultPosition, size=wx.DefaultSize, style=0):
         wx.ListCtrl.__init__(self, parent, wx.ID_ANY, pos, size, style)
         listmix.ListCtrlAutoWidthMixin.__init__(self)
+        self.setResizeColumn(0)
 
 
 class TranslationPage(wx.Panel):

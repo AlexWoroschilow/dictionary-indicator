@@ -19,27 +19,36 @@ import wx.lib.mixins.listctrl as listmix
 import wx.lib.buttons as buttons
 
 
-class EditableListCtrl(wx.ListCtrl, listmix.TextEditMixin):
-    def __init__(self, parent, ID=wx.ID_ANY, pos=wx.DefaultPosition, size=wx.DefaultSize, style=0):
+class ListCtrlAutoWidth(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin):
+    def __init__(self, parent, ID, pos=wx.DefaultPosition,
+                 size=wx.DefaultSize, style=0):
         wx.ListCtrl.__init__(self, parent, ID, pos, size, style)
+        listmix.ListCtrlAutoWidthMixin.__init__(self)
+        self.setResizeColumn(2)
+
+
+class EditableListCtrl(ListCtrlAutoWidth, listmix.TextEditMixin):
+    def __init__(self, parent, ID=wx.ID_ANY, pos=wx.DefaultPosition, size=wx.DefaultSize, style=0):
+        ListCtrlAutoWidth.__init__(self, parent, ID, pos, size, style)
         listmix.TextEditMixin.__init__(self)
+
 
 
 class HistoryPage(wx.Panel):
     def __init__(self, parent):
         wx.Panel.__init__(self, parent, style=wx.TEXT_ALIGNMENT_LEFT)
-
         style = wx.LC_REPORT | wx.BORDER_NONE | wx.LC_EDIT_LABELS | wx.LC_SORT_ASCENDING
         self._history = EditableListCtrl(self, style=style)
-        self._history.InsertColumn(0, 'Date', width=200)
-        self._history.InsertColumn(1, 'Word', width=150)
-        self._history.InsertColumn(2, 'Translation', width=200)
+        self._history.InsertColumn(0, 'Date', width=300)
+        self._history.InsertColumn(1, 'Word')
+        self._history.InsertColumn(2, 'Translation', width=300)
 
-        self.Bind(wx.EVT_LIST_KEY_DOWN, self.on_key_pressed, self._history)
+
+        self._history.Bind(wx.EVT_LIST_KEY_DOWN, self.on_key_pressed)
 
         sizer3 = wx.BoxSizer(wx.VERTICAL)
-        sizer3.Add(self._history, 40, wx.EXPAND)
-        sizer3.Add(self._button_panel, 1, wx.EXPAND)
+        sizer3.Add(self._history, proportion=20, flag=wx.ALL | wx.EXPAND)
+        sizer3.Add(self._button_panel, proportion=1, flag=wx.ALL | wx.EXPAND, border=0)
 
         self.SetSizer(sizer3)
 
@@ -49,25 +58,21 @@ class HistoryPage(wx.Panel):
 
         self._export_excel = buttons.GenButton(self, wx.ID_ANY, "Export as Excel", style=wx.BORDER_NONE)
         self._export_excel.Bind(wx.EVT_BUTTON, self.on_export_excel)
-        sizer.Add(self._export_excel, 1, wx.EXPAND)
+        sizer.Add(self._export_excel, proportion=1, flag=wx.ALL | wx.EXPAND)
 
-        sizer.AddSpacer(1)
 
         self._export_csv = buttons.GenButton(self, wx.ID_ANY, "Export as CSV", style=wx.BORDER_NONE)
         self._export_csv.Bind(wx.EVT_BUTTON, self.on_export_csv)
-        sizer.Add(self._export_csv, 1, wx.EXPAND)
+        sizer.Add(self._export_csv, proportion=1, flag=wx.ALL | wx.EXPAND)
 
-        sizer.AddSpacer(1)
 
         self._export_text = buttons.GenButton(self, wx.ID_ANY, "Export as Text", style=wx.BORDER_NONE)
         self._export_text.Bind(wx.EVT_BUTTON, self.on_export_text)
-        sizer.Add(self._export_text, 1, wx.EXPAND)
-
-        sizer.AddSpacer(1)
+        sizer.Add(self._export_text, proportion=1, flag=wx.ALL | wx.EXPAND)
 
         self._clean = buttons.GenButton(self, wx.ID_ANY, "Clean history", style=wx.BORDER_NONE)
         self._clean.Bind(wx.EVT_BUTTON, self.on_history_clean)
-        sizer.Add(self._clean, 1, wx.EXPAND)
+        sizer.Add(self._clean, proportion=1, flag=wx.ALL | wx.EXPAND)
 
         return sizer
 
@@ -149,8 +154,7 @@ class HistoryPage(wx.Panel):
 
     def on_key_pressed(self, event):
         if event.GetKeyCode() in [wx.WXK_DELETE]:
-            self.on_delete_pressed(event)
-            return None
+            return self.on_delete_pressed(event)
 
         if event.GetKeyCode() in [wx.WXK_RETURN]:
             return self.on_enter_pressed(event)
@@ -163,19 +167,7 @@ class HistoryPage(wx.Panel):
 
     def on_delete_pressed(self, event):
         item = self._history.GetFocusedItem()
-        above = self._history.GetNextItem(item, wx.LIST_NEXT_ABOVE)
-        if above not in [-1]:
-            self._history.Select(above)
-            self._history.DeleteItem(item)
-            return event.Skip()
-
-        below = self._history.GetNextItem(item, wx.LIST_NEXT_BELOW)
-        if below not in [1]:
-            self._history.Select(below)
-            self._history.DeleteItem(item)
-            return event.Skip()
-
-        return None
+        self._history.DeleteItem(item)
 
     def on_enter_pressed(self, event):
         pass
