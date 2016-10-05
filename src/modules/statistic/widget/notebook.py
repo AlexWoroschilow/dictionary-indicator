@@ -9,8 +9,11 @@
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+from datetime import datetime
+from dateutil import parser
+from collections import OrderedDict
+
 import wx
-from dateutil.parser import parse
 import matplotlib
 
 matplotlib.use('WXAgg')
@@ -38,34 +41,41 @@ class StatisticPage(wx.Panel):
 
         self.SetSizer(sizer1)
 
+    @staticmethod
+    def _date(string, hours=0, minutes=0, seconds=0):
+        return parser.parse(string).replace(
+            hour=hours, minute=minutes, second=seconds)
+
+
     @property
     def history(self):
         pass
 
     @history.setter
     def history(self, history):
+
         collection = {}
         for fields in history:
-
-            if len(fields) == 3:
-                datetime, word, translation = fields
-            else:
-                datetime, word = fields
-                
-            date = parse(datetime, fuzzy=True).date()
-            date_string = date.strftime("%d %b %y")
-
-            if not collection.has_key(date_string):
-                collection[date_string] = 1
+            date = self._date(fields[0])
+            if date is None:
                 continue
+            timestamp = int(date.strftime("%s"))
+            if timestamp is None:
+                continue
+            if timestamp not in collection:
+                collection[timestamp] = 1
+                continue
+            collection[timestamp] += 1
 
-            collection[date_string] += 1
+        collection = OrderedDict(sorted(collection.items()))
+        if collection is None:
+            return None
 
         labels = collection.keys()
-        labels.reverse()
+        labels = [datetime.fromtimestamp(i).strftime("%d %b %y")
+                  for i in labels]
 
         values = collection.values()
-        values.reverse()
 
         positions = [i for i in range(0, len(labels))]
 
