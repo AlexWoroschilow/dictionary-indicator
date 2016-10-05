@@ -1,0 +1,8 @@
+services:
+  dbus_service.kernel_subscriber:
+    class: modules.dbus_service.event.kernel.KernelEventSubscriber
+    calls:
+         - [ set_container, [ "@service_container" ]]
+    tags:
+        event.subscriber:
+          - [ ]

@@ -29,10 +29,15 @@ class WxApplication(wx.App):
         dispatcher = self._kernel.get('ioc.extra.event_dispatcher')
         dispatcher.dispatch('kernel_event.start', dispatcher.new_event([]))
 
+        icon = wx.EmptyIcon()
+        icon.CopyFromBitmap(wx.Bitmap("/home/sensey/Projects/DictionaryIndicator/img/dictionary.svg", wx.BITMAP_TYPE_ANY))
+
         window = wx.Frame(None)
-        window.SetSize((620, 600))
-        window.SetMinSize((620, 600))
+        window.SetIcon(icon)
+        window.SetTitle("Dictionary")
+        window.SetMinSize((900, 1000))
         window.Bind(wx.EVT_CLOSE, self.Destroy)
+
 
         panel = wx.Panel(window)
         self._notebook = wx.Notebook(panel, wx.ID_ANY)
@@ -43,7 +48,7 @@ class WxApplication(wx.App):
 
         sizer = wx.BoxSizer()
         panel.SetSizer(sizer)
-        sizer.Add(self._notebook, 1, wx.EXPAND)
+        sizer.Add(self._notebook, proportion=1, flag=wx.ALL | wx.EXPAND, border=15)
         window.Show()
 
         self.SetTopWindow(window)

@@ -18,3 +18,5 @@ from modules.history.module import Loader as HistoryLoader
 from modules.statistic.module import Loader as StatisticLoader
 from modules.terminal.module import Loader as TerminalLoader
 from modules.indicator.module import Loader as IndicatorLoader
+from modules.dbus_service.module import Loader as DBusServiceLoader
+from modules.dbus_client.module import Loader as DBusClientLoader
