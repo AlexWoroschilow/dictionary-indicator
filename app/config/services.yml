@@ -1,1 +1,4 @@
+services:
+  crossplatform.layout:
+    class: crossplatform.Layout
 ioc.extra.event:

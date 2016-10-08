@@ -16,7 +16,6 @@ from kernel import Kernel
 
 
 class WxApplication(wx.App):
-    
     _kernel = None
     _notebook = None
 
@@ -25,19 +24,20 @@ class WxApplication(wx.App):
         self._kernel = Kernel(options, args)
 
     def MainLoop(self, options=None, args=None):
-        
         dispatcher = self._kernel.get('ioc.extra.event_dispatcher')
         dispatcher.dispatch('kernel_event.start', dispatcher.new_event([]))
 
+        layout = self._kernel.get('crossplatform.layout')
+
         icon = wx.EmptyIcon()
-        icon.CopyFromBitmap(wx.Bitmap("/home/sensey/Projects/DictionaryIndicator/img/dictionary.svg", wx.BITMAP_TYPE_ANY))
+        icon.CopyFromBitmap(wx.Bitmap(layout.icon, wx.BITMAP_TYPE_ANY))
 
         window = wx.Frame(None)
         window.SetIcon(icon)
         window.SetTitle("Dictionary")
-        window.SetMinSize((900, 1000))
+        window.SetSize((layout.width, layout.height))
+        window.SetMinSize((layout.width, layout.height))
         window.Bind(wx.EVT_CLOSE, self.Destroy)
-
 
         panel = wx.Panel(window)
         self._notebook = wx.Notebook(panel, wx.ID_ANY)
@@ -48,7 +48,9 @@ class WxApplication(wx.App):
 
         sizer = wx.BoxSizer()
         panel.SetSizer(sizer)
-        sizer.Add(self._notebook, proportion=1, flag=wx.ALL | wx.EXPAND, border=15)
+        sizer.Add(self._notebook, proportion=1,
+                  flag=wx.ALL | wx.EXPAND,
+                  border=layout.border)
         window.Show()
 
         self.SetTopWindow(window)
@@ -59,7 +61,7 @@ class WxApplication(wx.App):
         dispatcher = self._kernel.get('ioc.extra.event_dispatcher')
         if event.GetOldSelection() is -1:
             return None
-        
+
         current = self._notebook.GetPage(event.GetSelection())
         previous = self._notebook.GetPage(event.GetOldSelection())
 

@@ -13,6 +13,7 @@
 import os
 import sys
 import string
+import platform
 
 import wx
 import wx.html2 as webview
@@ -37,8 +38,10 @@ class TranslationPage(wx.Panel):
         self._callback_on_select = on_select
         wx.Panel.__init__(self, parent)
         
-        self._search = wx.TextCtrl(self, size=(70, 70), style=wx.TE_PROCESS_ENTER) 
-        self._search.Bind(wx.EVT_TEXT_ENTER, self.on_search_selected)  
+        self._search = wx.TextCtrl(self, size=(40, 40), style=wx.TE_PROCESS_ENTER)
+        self._search.Bind(wx.EVT_TEXT_ENTER, self.on_search_selected)
+        self._search.SetFont(wx.Font(26, wx.MODERN, wx.NORMAL, wx.NORMAL, False, u'Consolas'))
+        
         
         self._scan_clipboard = wx.CheckBox(self, label='Scan and translate clipboard')
         self._scan_clipboard.Bind(wx.EVT_CHECKBOX, self.on_scan_checked)
@@ -59,10 +62,10 @@ class TranslationPage(wx.Panel):
         translations.Add(self._browser, proportion=3, flag=wx.ALL | wx.EXPAND)
 
         sizer3 = wx.BoxSizer(wx.VERTICAL)
-        sizer3.Add(self._search, proportion=1, flag=wx.ALL | wx.EXPAND, border=15)
-        sizer3.Add(self._checkbox_show_all, proportion=1, flag=wx.ALL | wx.EXPAND, border=15)
+        sizer3.Add(self._search, proportion=1, flag=wx.ALL | wx.EXPAND, border=self.border)
+        sizer3.Add(self._checkbox_show_all, proportion=1, flag=wx.ALL | wx.EXPAND, border=self.border)
         sizer3.Add(translations, proportion=20, flag=wx.ALL | wx.EXPAND, border=0)
-        sizer3.Add(self._scan_clipboard, proportion=1, flag=wx.ALL | wx.EXPAND, border=15)
+        sizer3.Add(self._scan_clipboard, proportion=1, flag=wx.ALL | wx.EXPAND, border=self.border)
 
         self.SetSizer(sizer3)
 
@@ -77,6 +80,12 @@ class TranslationPage(wx.Panel):
 
         for index, word in enumerate(value):
             self._suggestions.InsertStringItem(sys.maxint, word)
+
+    @property
+    def border(self):
+        if platform.system() in ["Darwin"]:
+            return 0
+        return 15
 
     @property
     def word(self):
