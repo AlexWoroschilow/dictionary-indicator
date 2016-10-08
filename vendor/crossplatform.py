@@ -29,10 +29,10 @@ class Layout(object):
     def width(self):
         if platform.system() in ["Darwin"]:
             return 500
-        return 900
+        return 1000
 
     @property
     def height(self):
         if platform.system() in ["Darwin"]:
             return 600
-        return 1000
+        return 900

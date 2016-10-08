@@ -20,4 +20,5 @@ from modules.terminal.module import Loader as TerminalLoader
 from modules.indicator.module import Loader as IndicatorLoader
 from modules.dbus_service.module import Loader as DBusServiceLoader
 from modules.dbus_client.module import Loader as DBusClientLoader
+from modules.icon.module import Loader as IconLoader
 from modules.dock.module import Loader as DockLoader
