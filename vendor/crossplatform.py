@@ -20,6 +20,13 @@ class Layout(object):
         return 0
 
     @property
+    def text(self):
+        if platform.system() in ["Darwin"]:
+            return 40
+        return 80
+
+
+    @property
     def border(self):
         if platform.system() in ["Darwin"]:
             return 0

@@ -38,7 +38,7 @@ class TranslationPage(wx.Panel):
         self._callback_on_select = on_select
         wx.Panel.__init__(self, parent)
 
-        self._search = wx.TextCtrl(self, size=(40, 40), style=wx.TE_PROCESS_ENTER)
+        self._search = wx.TextCtrl(self, size=(layout.text, layout.text), style=wx.TE_PROCESS_ENTER)
         self._search.Bind(wx.EVT_TEXT_ENTER, self.on_search_selected)
         self._search.SetFont(wx.Font(26, wx.MODERN, wx.NORMAL, wx.NORMAL, False, u'Consolas'))
 
