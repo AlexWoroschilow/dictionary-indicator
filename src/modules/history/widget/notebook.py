@@ -33,23 +33,19 @@ class EditableListCtrl(ListCtrlAutoWidth, listmix.TextEditMixin):
         listmix.TextEditMixin.__init__(self)
 
 
-
 class HistoryPage(wx.Panel):
-    def __init__(self, parent):
+    def __init__(self, layout, parent):
         wx.Panel.__init__(self, parent, style=wx.TEXT_ALIGNMENT_LEFT)
         style = wx.LC_REPORT | wx.BORDER_NONE | wx.LC_EDIT_LABELS | wx.LC_SORT_ASCENDING
         self._history = EditableListCtrl(self, style=style)
         self._history.InsertColumn(0, 'Date', width=300)
         self._history.InsertColumn(1, 'Word')
         self._history.InsertColumn(2, 'Translation', width=300)
-
-
         self._history.Bind(wx.EVT_LIST_KEY_DOWN, self.on_key_pressed)
 
         sizer3 = wx.BoxSizer(wx.VERTICAL)
-        sizer3.Add(self._history, proportion=20, flag=wx.ALL | wx.EXPAND)
-        sizer3.Add(self._button_panel, proportion=1, flag=wx.ALL | wx.EXPAND, border=0)
-
+        sizer3.Add(self._history, proportion=30, flag=wx.ALL | wx.EXPAND, border=layout.empty)
+        sizer3.Add(self._button_panel, proportion=1, flag=wx.ALL | wx.EXPAND, border=layout.empty)
         self.SetSizer(sizer3)
 
     @property
@@ -60,11 +56,9 @@ class HistoryPage(wx.Panel):
         self._export_excel.Bind(wx.EVT_BUTTON, self.on_export_excel)
         sizer.Add(self._export_excel, proportion=1, flag=wx.ALL | wx.EXPAND)
 
-
         self._export_csv = buttons.GenButton(self, wx.ID_ANY, "Export as CSV", style=wx.BORDER_NONE)
         self._export_csv.Bind(wx.EVT_BUTTON, self.on_export_csv)
         sizer.Add(self._export_csv, proportion=1, flag=wx.ALL | wx.EXPAND)
-
 
         self._export_text = buttons.GenButton(self, wx.ID_ANY, "Export as Text", style=wx.BORDER_NONE)
         self._export_text.Bind(wx.EVT_BUTTON, self.on_export_text)
@@ -82,19 +76,18 @@ class HistoryPage(wx.Panel):
             item = self._history.GetNextItem(index, wx.LIST_NEXT_BELOW, wx.LIST_STATE_DONTCARE)
             if item == -1:
                 break
-            
+
             date = self._history.GetItemText(item, 0)
             word = self._history.GetItemText(item, 1)
             trans = self._history.GetItemText(item, 2)
             if not len(date) or not len(word):
                 continue
-            
+
             datetime = parse(date, fuzzy=True)
             if not datetime:
                 continue
 
-            yield [ datetime.strftime("%Y.%m.%d %H:%M:%S"),
-                word.encode('utf-8'), trans.encode('utf-8') ]
+            yield [datetime.strftime("%Y.%m.%d %H:%M:%S"), word.encode('utf-8'), trans.encode('utf-8')]
 
     @history.setter
     def history(self, value):

@@ -10,30 +10,23 @@
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-import platform
+from modules.dock.widget.icon import DockIcon
 
 
-class Loader(object):
-    _options = None
-
-    def __init__(self, options=None):
-        self._options = options
-
-    def __enter__(self):
-        return self
+class KernelEventSubscriber(object):
+    _container = None
 
     @property
-    def config(self):
-        return 'config/services.yml'
+    def container(self):
+        return self._container
+
+    def set_container(self, container):
+        self._container = container
 
     @property
-    def enabled(self):
-        if platform.system() in ["Linux"]:
-            return self._options.tray
-        return False
+    def subscribed_events(self):
+        yield ('kernel_event.window', ['on_window', 2])
 
-    def on_loaded(self, container):
-        pass
-
-    def __exit__(self, type, value, traceback):
-        pass
+    def on_window(self, event, dispatcher):
+        layout = self._container.get('crossplatform.layout')
+        DockIcon(event.data, layout.icon)

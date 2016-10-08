@@ -3,17 +3,21 @@ Created on Oct 6, 2016
 
 @author: sensey
 '''
+import os
 import platform
 
 
 class Layout(object):
 
-    def __init__(self):
-        pass
-
     @property
     def icon(self):
-        return "img/dictionary.svg"
+        if platform.system() in ["Darwin"]:
+            return os.path.abspath(os.path.curdir) + "/img/icon_osx.png"
+        return os.path.abspath(os.path.curdir) + "/img/dictionary.svg"
+
+    @property
+    def empty(self):
+        return 0
 
     @property
     def border(self):

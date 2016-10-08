@@ -32,11 +32,12 @@ class KernelEventSubscriber(object):
         yield ('kernel_event.service_transate', ['on_clipboard_changed', 0])
 
     def on_window_tab(self, event, dispatcher):
+        layout = self._container.get('crossplatform.layout')
+        dictionary = self._container.get('dictionary')
 
-        self._page = TranslationPage(event.data, self.on_search, self.on_suggestion, self.on_toggle_scaning)
+        self._page = TranslationPage(layout, event.data, self.on_search, self.on_suggestion, self.on_toggle_scaning)
         event.data.AddPage(self._page, "Translation")
 
-        dictionary = self._container.get('dictionary')
         self._page.translations = dictionary.translate("welcome")
         self._page.suggestions = dictionary.suggestions("welcome")
 

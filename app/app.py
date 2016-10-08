@@ -13,6 +13,7 @@
 import os
 import wx
 from kernel import Kernel
+import wx.lib.embeddedimage
 
 
 class WxApplication(wx.App):
@@ -24,33 +25,31 @@ class WxApplication(wx.App):
         self._kernel = Kernel(options, args)
 
     def MainLoop(self, options=None, args=None):
+        layout = self._kernel.get('crossplatform.layout')
         dispatcher = self._kernel.get('ioc.extra.event_dispatcher')
         dispatcher.dispatch('kernel_event.start', dispatcher.new_event([]))
 
-        layout = self._kernel.get('crossplatform.layout')
-
-        icon = wx.EmptyIcon()
-        icon.CopyFromBitmap(wx.Bitmap(layout.icon, wx.BITMAP_TYPE_ANY))
-
         window = wx.Frame(None)
-        window.SetIcon(icon)
         window.SetTitle("Dictionary")
         window.SetSize((layout.width, layout.height))
         window.SetMinSize((layout.width, layout.height))
         window.Bind(wx.EVT_CLOSE, self.Destroy)
 
-        panel = wx.Panel(window)
-        self._notebook = wx.Notebook(panel, wx.ID_ANY)
-        self.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.OnPageChanged, self._notebook)
+        event = dispatcher.new_event(window)
+        dispatcher.dispatch('kernel_event.window', event)
 
-        event = dispatcher.new_event(self._notebook)
+        panel = wx.Panel(window)
+        self._area = wx.Notebook(panel, wx.ID_ANY)
+        self.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.OnPageChanged, self._area)
+
+        event = dispatcher.new_event(self._area)
         dispatcher.dispatch('kernel_event.window_tab', event)
 
         sizer = wx.BoxSizer()
         panel.SetSizer(sizer)
-        sizer.Add(self._notebook, proportion=1,
-                  flag=wx.ALL | wx.EXPAND,
-                  border=layout.border)
+
+        expand = wx.ALL | wx.EXPAND
+        sizer.Add(self._area, proportion=1, flag=expand, border=layout.border)
         window.Show()
 
         self.SetTopWindow(window)
@@ -62,8 +61,8 @@ class WxApplication(wx.App):
         if event.GetOldSelection() is -1:
             return None
 
-        current = self._notebook.GetPage(event.GetSelection())
-        previous = self._notebook.GetPage(event.GetOldSelection())
+        current = self._area.GetPage(event.GetSelection())
+        previous = self._area.GetPage(event.GetOldSelection())
 
         event = dispatcher.new_event((previous, current))
         dispatcher.dispatch('kernel_event.notebook_changed', event)

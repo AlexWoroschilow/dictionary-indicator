@@ -29,9 +29,10 @@ class KernelEventSubscriber(object):
         yield ('kernel_event.notebook_changed', ['on_window_tab_changed', 1])
 
     def on_window_tab(self, event, dispatcher):
+        layout = self._container.get('crossplatform.layout')
         service_history = self.container.get('history')
 
-        statistic = StatisticPage(event.data)
+        statistic = StatisticPage(layout, event.data)
         statistic.history = service_history.history
 
         event.data.AddPage(statistic, "Translation statistic")

@@ -28,9 +28,10 @@ class KernelEventSubscriber(object):
         yield ('kernel_event.window_tab', ['on_window_tab', 4])
 
     def on_window_tab(self, event, dispatcher):
+        layout = self._container.get('crossplatform.layout')
         dictionary = self.container.get('dictionary')
 
-        page = DictionaryPage(event.data)
+        page = DictionaryPage(layout, event.data)
         page.dictionaries = dictionary.dictionaries
 
         event.data.AddPage(page, "Dictionaries")

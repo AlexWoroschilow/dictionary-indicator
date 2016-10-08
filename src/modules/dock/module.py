@@ -28,8 +28,8 @@ class Loader(object):
 
     @property
     def enabled(self):
-        if platform.system() in ["Linux"]:
-            return self._options.tray
+        if platform.system() in ["Darwin"]:
+            return True
         return False
 
     def on_loaded(self, container):

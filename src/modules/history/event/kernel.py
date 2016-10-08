@@ -30,7 +30,8 @@ class KernelEventSubscriber(object):
 
     # Append custom page to common notebook
     def on_notebook(self, event, dispatcher):
-        event.data.AddPage(HistoryPage(event.data), "Translation history")
+        layout = self._container.get('crossplatform.layout')
+        event.data.AddPage(HistoryPage(layout, event.data), "Translation history")
 
     # Perform some actions if notebook
     # have been changed somehow

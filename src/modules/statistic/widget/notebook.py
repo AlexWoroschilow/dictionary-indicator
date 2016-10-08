@@ -25,7 +25,7 @@ from matplotlib.figure import Figure
 class StatisticPage(wx.Panel):
     _template = None
 
-    def __init__(self, parent):
+    def __init__(self, layout, parent):
         wx.Panel.__init__(self, parent)
 
         self.figure = Figure(facecolor='white')
@@ -35,8 +35,8 @@ class StatisticPage(wx.Panel):
         self._label = wx.StaticText(self, -1, label='loading...')
 
         sizer1 = wx.BoxSizer(wx.VERTICAL)
-        sizer1.Add(self.canvas, proportion=20, flag=wx.ALL | wx.EXPAND)
-        sizer1.Add(self._label, proportion=1, flag=wx.ALL | wx.EXPAND, border=15)
+        sizer1.Add(self.canvas, proportion=30, flag=wx.ALL | wx.EXPAND, border=layout.empty)
+        sizer1.Add(self._label, proportion=1, flag=wx.ALL | wx.EXPAND, border=layout.border)
 
         self.SetSizer(sizer1)
 
@@ -44,7 +44,6 @@ class StatisticPage(wx.Panel):
     def _date(string, hours=0, minutes=0, seconds=0):
         return parser.parse(string).replace(
             hour=hours, minute=minutes, second=seconds)
-
 
     @property
     def history(self):
