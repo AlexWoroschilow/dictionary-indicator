@@ -56,8 +56,8 @@ class HistoryPage(wx.Panel):
         self._history.Bind(wx.EVT_SIZE, self.on_resize)
 
         sizer3 = wx.BoxSizer(wx.VERTICAL)
+        sizer3.Add(self._button_panel, proportion=1, flag=wx.EXPAND | wx.ALL, border=layout.empty)
         sizer3.Add(self._history, proportion=30, flag=wx.EXPAND | wx.ALL, border=layout.empty)
-        sizer3.Add(self._button_panel, proportion=1, flag=wx.EXPAND, border=layout.empty)
         self.SetSizer(sizer3)
 
     @property
