@@ -11,8 +11,55 @@
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 import os
-from logging import *
 import string
+import sqlite3
+
+from logging import *
+from datetime import datetime
+
+
+class SQLiteHistory(object):
+    _connection = None
+
+    def __init__(self, database=None):
+        if not os.path.isfile(database):
+            self.__init_database(database)
+        if self._connection is None:
+            self._connection = sqlite3.connect(database, check_same_thread=False)
+            self._connection.text_factory = str
+
+    def __init_database(self, database=None):
+        self._connection = sqlite3.connect(database, check_same_thread=False)
+        self._connection.text_factory = str
+        self._connection.execute("CREATE TABLE history (id INTEGER PRIMARY KEY, date text, word text, description text)")
+        self._connection.execute("CREATE INDEX IDX_DATE ON history(date)")
+
+    @property
+    def history(self):
+        query = "SELECT * FROM history ORDER BY date DESC"
+        cursor = self._connection.cursor()
+        for row in cursor.execute(query):
+            index, date, word, description = row
+            yield [str(index).encode("utf-8"), date, word, description]
+
+    @history.setter
+    def history(self, collection):
+        pass
+
+    def add(self, word, translation=None):
+        time = datetime.now()
+        fields = (time.strftime("%Y.%m.%d %H:%M:%S"), word, '')
+        self._connection.execute("INSERT INTO history VALUES (NULL, ?, ?, ?)", fields)
+        self._connection.commit()
+
+    def update(self, index=None, date=None, word=None, description=None):
+        fields = (date, word, description, index)
+        self._connection.execute("UPDATE history SET date=?, word=?, description=? WHERE id=?", fields)
+        self._connection.commit()
+
+    def remove(self, index=None, date=None, word=None, description=None):
+        self._connection.execute("DELETE FROM history WHERE id=?", [index])
+        self._connection.commit()
 
 
 class CSVFileHistory(object):
@@ -37,8 +84,8 @@ class CSVFileHistory(object):
         self._logger_handler.setFormatter(Formatter('%(asctime)s;%(message)s', "%Y.%m.%d %H:%M:%S"))
         return self._logger_handler
 
-    def add_history(self, value):
-        self._logger.info(value)
+    def add(self, word, translation=None):
+        self._logger.info(word)
 
     @property
     def history(self):

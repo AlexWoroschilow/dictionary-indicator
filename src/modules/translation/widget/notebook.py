@@ -50,7 +50,7 @@ class TranslationPage(wx.Panel):
 
         self._browser = webview.WebView.New(self)
 
-        self._suggestions = ListCtrlAutoWidth(self, style=wx.LC_REPORT | wx.BORDER_NONE)
+        self._suggestions = ListCtrlAutoWidth(self, size=(20,200), style=wx.LC_REPORT | wx.BORDER_NONE)
         self._suggestions.InsertColumn(0, 'Similar words')
 
         self._suggestions.Bind(wx.EVT_LIST_ITEM_SELECTED, self.on_suggestion_selected)
@@ -76,7 +76,6 @@ class TranslationPage(wx.Panel):
     def suggestions(self, value):
         if self._suggestions.GetItemCount():
             self._suggestions.DeleteAllItems()
-
         for index, word in enumerate(value):
             self._suggestions.InsertStringItem(sys.maxint, word)
 

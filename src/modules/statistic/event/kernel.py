@@ -40,9 +40,6 @@ class KernelEventSubscriber(object):
     # Perform some actions if notebook
     # have been changed somehow
     def on_window_tab_changed(self, event, dispatcher):
-        service_history = self.container.get('history')
-
         (previous, current) = event.data
         if current.__class__.__name__.find('StatisticPage') != -1:
-            current.history = service_history.history
-            return None
+            current.history = self.container.get('history').history

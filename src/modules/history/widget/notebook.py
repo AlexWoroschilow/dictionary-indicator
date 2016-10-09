@@ -17,6 +17,7 @@ from dateutil.parser import parse
 import wx
 import wx.lib.mixins.listctrl as listmix
 import wx.lib.buttons as buttons
+import wx.grid
 
 
 class ListCtrlAutoWidth(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin):
@@ -34,19 +35,49 @@ class EditableListCtrl(ListCtrlAutoWidth, listmix.TextEditMixin):
 
 
 class HistoryPage(wx.Panel):
-    def __init__(self, layout, parent):
+    _on_update = None
+    _on_delete = None
+
+    def __init__(self, layout, parent, on_update=None, on_delete=None):
+        self._on_update = on_update
+        self._on_delete = on_delete
+
         wx.Panel.__init__(self, parent, style=wx.TEXT_ALIGNMENT_LEFT)
-        style = wx.LC_REPORT | wx.BORDER_NONE | wx.LC_EDIT_LABELS | wx.LC_SORT_ASCENDING
-        self._history = EditableListCtrl(self, style=style)
-        self._history.InsertColumn(0, 'Date', width=300)
-        self._history.InsertColumn(1, 'Word')
-        self._history.InsertColumn(2, 'Translation', width=300)
-        self._history.Bind(wx.EVT_LIST_KEY_DOWN, self.on_key_pressed)
+        # Create a wxGrid object
+        self._history = wx.grid.Grid(self, -1)
+
+        # Then we call CreateGrid to set the dimensions of the grid
+        # (100 rows and 10 columns in this example)
+        self._history.CreateGrid(1, 4)
+        self._history.HideCol(0)
+
+        self._history.Bind(wx.grid.EVT_GRID_CELL_CHANGED, self.on_changed)
 
         sizer3 = wx.BoxSizer(wx.VERTICAL)
         sizer3.Add(self._history, proportion=30, flag=wx.ALL | wx.EXPAND, border=layout.empty)
         sizer3.Add(self._button_panel, proportion=1, flag=wx.ALL | wx.EXPAND, border=layout.empty)
         self.SetSizer(sizer3)
+
+    @property
+    def history(self):
+        for row in range(0, self._history.GetNumberRows()):
+            collection = []
+            for column in range(0, self._history.GetNumberCols()):
+                collection.append(self._history.GetCellValue(row, column))
+            yield collection
+
+    @history.setter
+    def history(self, value=None):
+        self._history.DeleteRows(numRows=self._history.GetNumberRows())
+        for row, line in enumerate(value):
+            if self._history.GetNumberRows() == row:
+                self._history.AppendRows(1)
+            for column, field in enumerate(line):
+                if self._history.GetNumberCols() == column:
+                    self._history.AppendCols(1)
+                self._history.SetColSize(column, 130)
+                self._history.SetCellValue(row, column, field)
+        self._history.HideCol(0)
 
     @property
     def _button_panel(self):
@@ -70,59 +101,20 @@ class HistoryPage(wx.Panel):
 
         return sizer
 
-    @property
-    def history(self):
-        for index in range(-1, self._history.GetItemCount()):
-            item = self._history.GetNextItem(index, wx.LIST_NEXT_BELOW, wx.LIST_STATE_DONTCARE)
-            if item == -1:
-                break
+    def on_changed(self, event):
+        collection = []
+        row = event.GetRow()
+        for column in range(0, self._history.GetNumberCols()):
+            collection.append(self._history.GetCellValue(row, column))
+        if self._on_update is not None:
+            self._on_update(collection)
 
-            date = self._history.GetItemText(item, 0)
-            word = self._history.GetItemText(item, 1)
-            trans = self._history.GetItemText(item, 2)
-            if not len(date) or not len(word):
-                continue
-
-            datetime = parse(date, fuzzy=True)
-            if not datetime:
-                continue
-
-            yield [datetime.strftime("%Y.%m.%d %H:%M:%S"), word.encode('utf-8'), trans.encode('utf-8')]
-
-    @history.setter
-    def history(self, value):
-        self._history.DeleteAllItems()
-        for index, line in enumerate(value):
-            self._history.InsertStringItem(index, 'line', 1)
-
-            self._history.SetStringItem(index, 0, line[0])
-            self._history.SetStringItem(index, 1, line[1])
-            if len(line) < 3:
-                continue
-
-            self._history.SetStringItem(index, 2, line[2])
-
-    def on_export_excel(self, event):
-        dialog = wx.FileDialog(self, "Save As", "", "", "", wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT)
-        if dialog.ShowModal() == wx.ID_OK:
-
-            column0 = []
-            column1 = []
-            column2 = []
-            for fields in self.history:
-                column0.append(fields[0])
-                column1.append(fields[1])
-                column2.append(fields[2])
-
-            frame = DataFrame({
-                'Date': column0,
-                'Words': column1,
-                'Translations': column2
-            })
-
-            frame.to_excel(dialog.GetPath(), sheet_name='sheet1', index=False)
-
-        dialog.Destroy()
+    def on_history_clean(self, event):
+        for row in range(0, self._history.GetNumberRows()):
+            if self._on_delete is not None:
+                index = self._history.GetCellValue(row, 0)
+                self._on_delete([index, None, None, None])
+        self._history.DeleteRows(numRows=self._history.GetNumberRows())
 
     def on_export_csv(self, event):
         dialog = wx.FileDialog(self, "Save As", "", "", "", wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT)
@@ -133,6 +125,21 @@ class HistoryPage(wx.Panel):
                 stream.close()
         dialog.Destroy()
 
+    def on_export_excel(self, event):
+        dialog = wx.FileDialog(self, "Save As", "", "", "", wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT)
+        if dialog.ShowModal() == wx.ID_OK:
+            column0 = []
+            column1 = []
+            column2 = []
+            for fields in self.history:
+                index, date, word, description = fields
+                column0.append(fields[date])
+                column1.append(fields[word])
+                column2.append(fields[description])
+            frame = DataFrame({'Date': column0, 'Words': column1, 'Translations': column2 })
+            frame.to_excel(dialog.GetPath(), sheet_name='sheet1', index=False)
+        dialog.Destroy()
+
     def on_export_text(self, event):
         dialog = wx.FileDialog(self, "Save As", "", "", "", wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT)
         if dialog.ShowModal() == wx.ID_OK:
@@ -141,48 +148,3 @@ class HistoryPage(wx.Panel):
                     stream.write("%s\n" % string.join(fields, "\t"))
                 stream.close()
         dialog.Destroy()
-
-    def on_history_clean(self, event):
-        self._history.DeleteAllItems()
-
-    def on_key_pressed(self, event):
-        if event.GetKeyCode() in [wx.WXK_DELETE]:
-            return self.on_delete_pressed(event)
-
-        if event.GetKeyCode() in [wx.WXK_RETURN]:
-            return self.on_enter_pressed(event)
-
-        if event.GetKeyCode() in [wx.WXK_UP, wx.WXK_PAGEUP]:
-            return self.on_up_pressed(event)
-
-        if event.GetKeyCode() in [wx.WXK_DOWN, wx.WXK_PAGEDOWN]:
-            return self.on_down_pressed(event)
-
-    def on_delete_pressed(self, event):
-        item = self._history.GetFocusedItem()
-        self._history.DeleteItem(item)
-
-    def on_enter_pressed(self, event):
-        pass
-
-    def on_up_pressed(self, event):
-        item = self._history.GetFocusedItem()
-        below = self._history.GetNextItem(item, wx.LIST_NEXT_BELOW)
-
-        if below in [1]:
-            return None
-
-        self._history.Select(item, False)
-        self._history.Select(below, True)
-        return event.Skip()
-
-    def on_down_pressed(self, event):
-        item = self._history.GetFocusedItem()
-        above = self._history.GetNextItem(item, wx.LIST_NEXT_ABOVE)
-
-        if above in [-1]:
-            return None
-
-        self._history.Select(item, False)
-        self._history.Select(above, True)
-        return event.Skip()

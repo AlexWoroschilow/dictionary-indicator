@@ -163,7 +163,7 @@ class _StarDictIdx(object):
         """ prepare main dict and parsing parameters """
         self._idx = {}
         idx_offset_bytes_size = int(container.ifo.idxoffsetbits / 8)
-        idx_offset_format = {4: 'L', 8: 'Q',}[idx_offset_bytes_size]
+        idx_offset_format = {4: 'L', 8: 'Q', }[idx_offset_bytes_size]
         idx_cords_bytes_size = idx_offset_bytes_size + 4
 
         """ parse data via regex """
@@ -250,7 +250,7 @@ class _StarDictIdxSQLite(_StarDictIdx):
 
         """ prepare main dict and parsing parameters """
         idx_offset_bytes_size = int(container.ifo.idxoffsetbits / 8)
-        idx_offset_format = {4: 'L', 8: 'Q',}[idx_offset_bytes_size]
+        idx_offset_format = {4: 'L', 8: 'Q', }[idx_offset_bytes_size]
         idx_cords_bytes_size = idx_offset_bytes_size + 4
 
         """ parse data via regex """
@@ -285,30 +285,22 @@ class _StarDictIdxSQLite(_StarDictIdx):
     def matches(self, word, limit=30):
         query = "SELECT * FROM words WHERE word LIKE ? limit ?"
         cursor = self._connection.cursor()
-        cursor.execute(query, [word + "%", limit])
-
-        response = cursor.fetchall()
-        if response is not None:
-            return response
+        for row in cursor.execute(query, [word + "%", limit]):
+            yield row
 
     def __getitem__(self, word):
         query = "SELECT * FROM words WHERE word = ?"
         cursor = self._connection.cursor()
-        cursor.execute(query, [word])
-
-        response = cursor.fetchone()
-        if response is not None:
-            word, start, length = response
+        for row in cursor.execute(query, [word]):
+            word, start, length = row
             return [start, length]
+        return None
 
     def __contains__(self, word):
         query = "SELECT COUNT(*) FROM words WHERE word = ?"
         cursor = self._connection.cursor()
-        cursor.execute(query, [word])
-
-        response = cursor.fetchone()
-        if response is not None:
-            count, = response
+        for row in cursor.execute(query, [word]):
+            count, = row
             return count > 0
         return False
 

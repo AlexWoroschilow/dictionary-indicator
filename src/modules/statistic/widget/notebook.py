@@ -51,41 +51,43 @@ class StatisticPage(wx.Panel):
 
     @history.setter
     def history(self, history):
-
         collection = {}
         for fields in history:
-            date = self._date(fields[0])
+            index, date, word, description = fields
+            date = self._date(date)
             if date is None:
                 continue
+
             timestamp = int(date.strftime("%s"))
             if timestamp is None:
                 continue
+
             if timestamp not in collection:
                 collection[timestamp] = 1
                 continue
             collection[timestamp] += 1
-
+ 
         collection = OrderedDict(sorted(collection.items()))
         if collection is None:
             return None
-
+ 
         labels = collection.keys()
         labels = [datetime.fromtimestamp(i).strftime("%d %b %y")
                   for i in labels]
-
+ 
         values = collection.values()
-
+ 
         positions = [i for i in range(0, len(labels))]
-
+ 
         self.axes.clear()
         if len(labels) > 1 and len(values) > 1:
             self.axes.plot(positions, values, linewidth=3.0)
-
+ 
         self.axes.set_xticks(positions)
         self.axes.set_xticklabels(labels, rotation=23, fontdict={'size': 9})
         self.axes.set_ylabel('Amount of words')
-
+ 
         message = "%s days history statistic" % len(labels)
         self._label.SetLabelText(message)
-
+ 
         self.canvas.draw()

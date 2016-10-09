@@ -30,19 +30,23 @@ class KernelEventSubscriber(object):
 
     # Append custom page to common notebook
     def on_notebook(self, event, dispatcher):
-        layout = self._container.get('crossplatform.layout')
-        event.data.AddPage(HistoryPage(layout, event.data), "Translation history")
+        event.data.AddPage(HistoryPage(self._container.get('crossplatform.layout'),
+                           event.data, self.on_history_changed,
+                           self.on_history_removed), "Translation history")
+
+    def on_history_changed(self, values):
+        index, date, word, description = values
+        history = self.container.get('history')
+        history.update(index, date, word, description)
+
+    def on_history_removed(self, values):
+        index, date, word, description = values
+        history = self.container.get('history')
+        history.remove(index, date, word, description)
 
     # Perform some actions if notebook
     # have been changed somehow
     def on_notebook_changed(self, event, dispatcher):
-        service_history = self.container.get('history')
-
         (previous, current) = event.data
         if current.__class__.__name__.find('HistoryPage') != -1:
-            current.history = service_history.history
-            return None
-
-        if previous.__class__.__name__.find('HistoryPage') != -1:
-            service_history.history = previous.history
-            return None
+            current.history = self.container.get('history').history

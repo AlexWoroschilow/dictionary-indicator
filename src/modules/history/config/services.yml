@@ -1,8 +1,8 @@
 services:
   history:
-    class: modules.history.service.history.CSVFileHistory
+    class: modules.history.service.history.SQLiteHistory
     arguments:
-      - "./history.csv"
+      - "./history.dhf"
   history.subscriber_gui:
     class: modules.history.event.kernel.KernelEventSubscriber
     calls:

@@ -28,5 +28,4 @@ class HistoryEventSubscriber(object):
 
     def on_dictionary_translation(self, event, dispatcher):
         word, translation = event.data
-        history = self.container.get('history')
-        history.add_history(word)
+        self.container.get('history').add(word, translation)
