@@ -35,7 +35,6 @@ class EditableListCtrl(ListCtrlAutoWidth, listmix.TextEditMixin):
 
 
 class HistoryPage(wx.Panel):
-    _export_as = 1012
     _on_update = None
     _on_delete = None
 
@@ -45,19 +44,20 @@ class HistoryPage(wx.Panel):
 
         wx.Panel.__init__(self, parent, style=wx.TEXT_ALIGNMENT_LEFT)
         # Create a wxGrid object
-        self._history = wx.grid.Grid(self, -1)
+        self._history = wx.grid.Grid(self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, 0)
 
         # Then we call CreateGrid to set the dimensions of the grid
         # (100 rows and 10 columns in this example)
         self._history.CreateGrid(1, 4)
+        self._history.SetMargins(0, 0)
         self._history.HideCol(0)
 
         self._history.Bind(wx.grid.EVT_GRID_CELL_CHANGED, self.on_changed)
         self._history.Bind(wx.EVT_SIZE, self.on_resize)
 
-        sizer3 = wx.BoxSizer(wx.HORIZONTAL)
-        sizer3.Add(self._button_panel, proportion=1, flag=wx.EXPAND, border=layout.empty)
+        sizer3 = wx.BoxSizer(wx.VERTICAL)
         sizer3.Add(self._history, proportion=30, flag=wx.EXPAND | wx.ALL, border=layout.empty)
+        sizer3.Add(self._button_panel, proportion=1, flag=wx.EXPAND, border=layout.empty)
         self.SetSizer(sizer3)
 
     @property
@@ -84,15 +84,14 @@ class HistoryPage(wx.Panel):
 
     @property
     def _button_panel(self):
-        self._toolbar = wx.ToolBar(self, style=wx.TB_FLAT | wx.TB_VERTICAL | wx.TB_NODIVIDER)
+        self._toolbar = wx.ToolBar(self, style=wx.TB_FLAT | wx.TB_NOICONS | wx.TB_HORZ_LAYOUT)
         self._toolbar.Bind(wx.EVT_TOOL, self.on_export)
  
-        self._toolbar.AddRadioTool(1012, self.scale(wx.Bitmap("./img/excel.png")))
-        self._toolbar.AddRadioTool(1013, self.scale(wx.Bitmap("./img/csv.png")))
-        self._toolbar.AddRadioTool(1014, self.scale(wx.Bitmap("./img/text.png")))
-        self._toolbar.AddLabelTool(2012, 'Export to disk', self.scale(wx.Bitmap("./img/save.png")))
+        self._toolbar.AddLabelTool(1012, 'Export as XLS', self.scale(wx.Bitmap("./img/excel.png")))
+        self._toolbar.AddLabelTool(1013, 'Export as CSV', self.scale(wx.Bitmap("./img/csv.png")))
+        self._toolbar.AddLabelTool(1014, 'Export as Text', self.scale(wx.Bitmap("./img/text.png")))
         self._toolbar.AddSeparator()
-        self._toolbar.AddLabelTool(3012, 'Clean table', self.scale(wx.Bitmap("./img/clean.png")))
+        self._toolbar.AddLabelTool(3012, 'Clean all', self.scale(wx.Bitmap("./img/clean.png")))
  
         self._toolbar.Realize()
  
@@ -106,25 +105,19 @@ class HistoryPage(wx.Panel):
         return result
 
     def on_export(self, event):
-        if event.GetId() in [1012, 1013, 1014]:
-            self._export_as = event.GetId()
-            return None
-
-        if event.GetId() in [2012]:
-            if self._export_as in [1012]:
-                return self.on_export_excel(event)
-            if self._export_as in [1013]:
-                return self.on_export_csv(event)
-            if self._export_as in [1014]:
-                return self.on_export_text(event)
-
+        if event.GetId() in [1012]:
+            return self.on_export_excel(event)
+        if event.GetId() in [1013]:
+            return self.on_export_csv(event)
+        if event.GetId() in [1014]:
+            return self.on_export_text(event)
         if event.GetId() in [3012]:
             return self.on_history_clean(event)
 
     def on_resize(self, event=None):
         width, height = self.GetClientSizeTuple()
         for col in range(1, 4):
-            self._history.SetColSize(col, width/3)
+            self._history.SetColSize(col, width / 3)
 
     def on_changed(self, event):
         collection = []
