@@ -55,7 +55,7 @@ class HistoryPage(wx.Panel):
         self._history.Bind(wx.grid.EVT_GRID_CELL_CHANGED, self.on_changed)
         self._history.Bind(wx.EVT_SIZE, self.on_resize)
 
-        sizer3 = wx.BoxSizer(wx.VERTICAL)
+        sizer3 = wx.BoxSizer(wx.HORIZONTAL)
         sizer3.Add(self._button_panel, proportion=1, flag=wx.EXPAND | wx.ALL, border=layout.empty)
         sizer3.Add(self._history, proportion=30, flag=wx.EXPAND | wx.ALL, border=layout.empty)
         self.SetSizer(sizer3)
@@ -84,14 +84,14 @@ class HistoryPage(wx.Panel):
 
     @property
     def _button_panel(self):
-        self._toolbar = wx.ToolBar(self, style=wx.TB_FLAT | wx.TB_NOICONS | wx.TB_HORZ_LAYOUT)
+        self._toolbar = wx.ToolBar(self, style=wx.TB_FLAT | wx.TB_NOICONS | wx.TB_VERTICAL)
         self._toolbar.Bind(wx.EVT_TOOL, self.on_export)
  
-        self._toolbar.AddLabelTool(1012, 'Export as XLS', self.scale(wx.Bitmap("./img/excel.png")))
-        self._toolbar.AddLabelTool(1013, 'Export as CSV', self.scale(wx.Bitmap("./img/csv.png")))
-        self._toolbar.AddLabelTool(1014, 'Export as Text', self.scale(wx.Bitmap("./img/text.png")))
-        self._toolbar.AddSeparator()
-        self._toolbar.AddLabelTool(3012, 'Clean all', self.scale(wx.Bitmap("./img/clean.png")))
+        self._toolbar.AddLabelTool(1012, 'XLS', self.scale(wx.Bitmap("./img/excel.png")))
+        self._toolbar.AddLabelTool(1013, 'CSV', self.scale(wx.Bitmap("./img/csv.png")))
+        self._toolbar.AddLabelTool(1014, 'TXT', self.scale(wx.Bitmap("./img/text.png")))
+#         self._toolbar.AddSeparator()
+#         self._toolbar.AddLabelTool(3012, 'Clean', self.scale(wx.Bitmap("./img/clean.png")))
  
         self._toolbar.Realize()
  
