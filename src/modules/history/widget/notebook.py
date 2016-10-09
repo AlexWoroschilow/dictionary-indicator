@@ -35,6 +35,7 @@ class EditableListCtrl(ListCtrlAutoWidth, listmix.TextEditMixin):
 
 
 class HistoryPage(wx.Panel):
+    _export_as = 1012
     _on_update = None
     _on_delete = None
 
@@ -49,13 +50,16 @@ class HistoryPage(wx.Panel):
         # Then we call CreateGrid to set the dimensions of the grid
         # (100 rows and 10 columns in this example)
         self._history.CreateGrid(1, 4)
+        self._history.SetColLabelSize(20)
+        self._history.SetRowLabelSize(20)
         self._history.HideCol(0)
 
         self._history.Bind(wx.grid.EVT_GRID_CELL_CHANGED, self.on_changed)
+        self._history.Bind(wx.EVT_SIZE, self.on_resize)
 
-        sizer3 = wx.BoxSizer(wx.VERTICAL)
-        sizer3.Add(self._history, proportion=30, flag=wx.ALL | wx.EXPAND, border=layout.empty)
-        sizer3.Add(self._button_panel, proportion=1, flag=wx.ALL | wx.EXPAND, border=layout.empty)
+        sizer3 = wx.BoxSizer(wx.HORIZONTAL)
+        sizer3.Add(self._button_panel, proportion=1, flag=wx.EXPAND, border=layout.empty)
+        sizer3.Add(self._history, proportion=30, flag=wx.EXPAND | wx.ALL, border=layout.empty)
         self.SetSizer(sizer3)
 
     @property
@@ -81,25 +85,47 @@ class HistoryPage(wx.Panel):
 
     @property
     def _button_panel(self):
-        sizer = wx.BoxSizer(wx.HORIZONTAL)
+        self._toolbar = wx.ToolBar(self, style=wx.TB_FLAT | wx.TB_VERTICAL | wx.TB_NODIVIDER)
+        self._toolbar.Bind(wx.EVT_TOOL, self.on_export)
+ 
+        self._toolbar.AddRadioTool(1012, self.scale(wx.Bitmap("./img/excel.png")))
+        self._toolbar.AddRadioTool(1013, self.scale(wx.Bitmap("./img/csv.png")))
+        self._toolbar.AddRadioTool(1014, self.scale(wx.Bitmap("./img/text.png")))
+        self._toolbar.AddLabelTool(2012, 'Export to disk', self.scale(wx.Bitmap("./img/save.png")))
+        self._toolbar.AddSeparator()
+        self._toolbar.AddLabelTool(3012, 'Clean table', self.scale(wx.Bitmap("./img/clean.png")))
+ 
+        self._toolbar.Realize()
+ 
+        return self._toolbar
 
-        self._export_excel = buttons.GenButton(self, wx.ID_ANY, "Export as Excel", style=wx.BORDER_NONE)
-        self._export_excel.Bind(wx.EVT_BUTTON, self.on_export_excel)
-        sizer.Add(self._export_excel, proportion=1, flag=wx.ALL | wx.EXPAND)
+    @staticmethod
+    def scale(bitmap, width=32, height=32):
+        image = wx.ImageFromBitmap(bitmap)
+        image = image.Scale(width, height, wx.IMAGE_QUALITY_HIGH)
+        result = wx.BitmapFromImage(image)
+        return result
 
-        self._export_csv = buttons.GenButton(self, wx.ID_ANY, "Export as CSV", style=wx.BORDER_NONE)
-        self._export_csv.Bind(wx.EVT_BUTTON, self.on_export_csv)
-        sizer.Add(self._export_csv, proportion=1, flag=wx.ALL | wx.EXPAND)
+    def on_export(self, event):
+        if event.GetId() in [1012, 1013, 1014]:
+            self._export_as = event.GetId()
+            return None
 
-        self._export_text = buttons.GenButton(self, wx.ID_ANY, "Export as Text", style=wx.BORDER_NONE)
-        self._export_text.Bind(wx.EVT_BUTTON, self.on_export_text)
-        sizer.Add(self._export_text, proportion=1, flag=wx.ALL | wx.EXPAND)
+        if event.GetId() in [2012]:
+            if self._export_as in [1012]:
+                return self.on_export_excel(event)
+            if self._export_as in [1013]:
+                return self.on_export_csv(event)
+            if self._export_as in [1014]:
+                return self.on_export_text(event)
 
-        self._clean = buttons.GenButton(self, wx.ID_ANY, "Clean history", style=wx.BORDER_NONE)
-        self._clean.Bind(wx.EVT_BUTTON, self.on_history_clean)
-        sizer.Add(self._clean, proportion=1, flag=wx.ALL | wx.EXPAND)
+        if event.GetId() in [3012]:
+            return self.on_history_clean(event)
 
-        return sizer
+    def on_resize(self, event):
+        width, height = self.GetClientSizeTuple()
+        for col in range(1, 4):
+            self._history.SetColSize(col, width/3)
 
     def on_changed(self, event):
         collection = []
@@ -133,9 +159,9 @@ class HistoryPage(wx.Panel):
             column2 = []
             for fields in self.history:
                 index, date, word, description = fields
-                column0.append(fields[date])
-                column1.append(fields[word])
-                column2.append(fields[description])
+                column0.append(date)
+                column1.append(word)
+                column2.append(description)
             frame = DataFrame({'Date': column0, 'Words': column1, 'Translations': column2 })
             frame.to_excel(dialog.GetPath(), sheet_name='sheet1', index=False)
         dialog.Destroy()
