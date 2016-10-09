@@ -108,7 +108,6 @@ class TranslationPage(wx.Panel):
     def on_show_all(self, event):
         checkbox = event.GetEventObject()
         self._show_all = checkbox.GetValue()
-        print(self._show_all)
 
     def on_scan_checked(self, event):
         if self._callback_on_scan is not None:

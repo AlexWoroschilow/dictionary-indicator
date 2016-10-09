@@ -50,8 +50,6 @@ class HistoryPage(wx.Panel):
         # Then we call CreateGrid to set the dimensions of the grid
         # (100 rows and 10 columns in this example)
         self._history.CreateGrid(1, 4)
-        self._history.SetColLabelSize(20)
-        self._history.SetRowLabelSize(20)
         self._history.HideCol(0)
 
         self._history.Bind(wx.grid.EVT_GRID_CELL_CHANGED, self.on_changed)
@@ -82,6 +80,7 @@ class HistoryPage(wx.Panel):
                 self._history.SetColSize(column, 130)
                 self._history.SetCellValue(row, column, field)
         self._history.HideCol(0)
+        self.on_resize(None)
 
     @property
     def _button_panel(self):
@@ -122,7 +121,7 @@ class HistoryPage(wx.Panel):
         if event.GetId() in [3012]:
             return self.on_history_clean(event)
 
-    def on_resize(self, event):
+    def on_resize(self, event=None):
         width, height = self.GetClientSizeTuple()
         for col in range(1, 4):
             self._history.SetColSize(col, width/3)
